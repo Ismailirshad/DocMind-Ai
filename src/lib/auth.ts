@@ -1,21 +1,28 @@
-import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import User from "@/models/User";
 
-export async function protectRoute() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value;
+export interface JwtPayload {
+  id: string;
+}
 
-  if (!token) {
-    throw Error("Unauthorized, No token found");
+export async function protectRoute(req: Request) {
+  const authHeader = req.headers.get("authorization");
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    throw new Error("Unauthorized");
   }
+  const token = authHeader.split(" ")[1];
+  try {
+    const decoded = jwt.verify(token, process.env.ACCESS_SECRET!) as JwtPayload;
 
-  const decoded = jwt.verify(token, process.env.JWT_SECRET!) as jwt.JwtPayload;
-  const user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id).select("-password");
 
-  if (!user) {
-    throw new Error("User not found");
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  } catch (error) {
+    console.log("Access token expired", error);
+    throw new Error("Access token expired");
   }
-
-  return user;
 }

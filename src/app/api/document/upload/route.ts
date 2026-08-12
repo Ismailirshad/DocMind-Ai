@@ -2,17 +2,18 @@ import { protectRoute } from "@/lib/auth";
 import cloudinary from "@/lib/cloudinary";
 import connectDB from "@/lib/db";
 import Document from "@/models/Document";
+import { UploadApiResponse } from "cloudinary";
+// @ts-expect-error pdf-parse/lib/pdf-parse does not provide TypeScript declarations
 import pdfParse from "pdf-parse/lib/pdf-parse";
 
 export async function POST(req: Request) {
   try {
     await connectDB();
     const formData = await req.formData();
-    const user = await protectRoute();
-    console.log("jhje", formData);
+    const user = await protectRoute(req);
 
-    const title = formData.get("title");
-    const category = formData.get("category");
+    const title = formData.get("title") as string;
+    const category = formData.get("category") as string;
     const file = formData.get("file") as File;
 
     if (!title || !category || !file) {
@@ -26,26 +27,28 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(bytes);
 
     const data = await pdfParse(buffer);
-    console.log(data);
-    const extractedData = data.text;
-    const pageCount = data.numpages;
+    const extractedData: string = data.text;
+    const pageCount: number = data.numpages;
 
-    const result = await new Promise((resolve, reject) => {
+    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(
           {
-            resource_type: "raw",
             folder: "Docmind-Ai",
+            public_id: file.name.replace(".pdf", ""),
           },
           (error, result) => {
-            if (error) reject(error);
-            else resolve(result);
+            if (error) {
+              reject(error);
+            } else if (!result) {
+              reject(new Error("Cloudinary upload failed"));
+            } else {
+              resolve(result);
+            }
           },
         )
         .end(buffer);
     });
-
-    console.log("url is", result);
 
     const document = await Document.create({
       user: user._id,
@@ -56,16 +59,30 @@ export async function POST(req: Request) {
       pageCount: pageCount,
     });
 
-    return Response.json({
-      success: true,
-      message: "Document added successfully",
-    });
-  } catch (error) {
-    console.log(error);
     return Response.json(
       {
-        message: "Failed to add document ",
-        error,
+        document,
+        success: true,
+        message: "Document added successfully",
+      },
+      { status: 201 },
+    );
+  } catch (error) {
+    console.error("Error in uplaoding document route:", error);
+    if (error instanceof Error && error.message === "Access token expired") {
+      return Response.json(
+        {
+          message: "Access token expired",
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
+    return Response.json(
+      {
+        message: "Failed to upload document",
       },
       {
         status: 500,

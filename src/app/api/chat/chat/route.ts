@@ -4,41 +4,49 @@ import ai from "@/lib/gemini";
 import Chat from "@/models/chat";
 import Document from "@/models/Document";
 
+interface ChatBody {
+  documentId: string | null;
+  question: string;
+}
 export async function POST(req: Request) {
+  try {
     await connectDB();
-    const user = await protectRoute();
-    const { documentId, question } = await req.json();
-    let document = null;
-    let prompt;
+    const user = await protectRoute(req);
+    const body: ChatBody = await req.json();
+    const { documentId, question } = body;
 
-    try {
-        //First checking does the user have any uploaded documents
-        const documents = await Document.find({ user: user._id });
-        if (!documents.length) {
-            return Response.json(
-                { message: "No uploaded documents found." },
-                { status: 404 },
-            );
-        }
+    let prompt: string;
 
-        //Here it checks does user selected specific document 
-        if (documentId) {
-            document = await Document.findById(documentId);
+    //First checking does the user have any uploaded documents
+    const documents = await Document.find({ user: user._id });
+    if (!documents.length) {
+      return Response.json(
+        { message: "No uploaded documents found." },
+        { status: 404 },
+      );
+    }
 
-            if (!document) {
-                return Response.json(
-                    { message: "Document not found" },
-                    { status: 404 },
-                );
-            }
+    //Here it checks does user selected specific document
+    if (documentId) {
+      const document = await Document.findById(documentId);
 
-            prompt = `
+      if (!document) {
+        return Response.json(
+          { message: "Document not found" },
+          { status: 404 },
+        );
+      }
+
+      prompt = `
 You are an AI document assistant.
 
-Answer ONLY using the information in the document below.
-
-If the answer is not present, reply:
-"I couldn't find that information in the document."
+Instructions:
+1. Search the uploaded document(s) for the answer.
+2. If the answer is found, answer ONLY using the document(s). Do not add outside information.
+3. If the answer is NOT found, first say:
+   "This information is not available in your uploaded document(s). The following answer is based on my general knowledge."
+4. Then answer the question using your general knowledge.
+5. If the question requires both document information and general knowledge, clearly separate them.
 
 Document:
 ${document.extractedText}
@@ -46,58 +54,67 @@ ${document.extractedText}
 Question:
 ${question}
 `;
-        } else {
-            //This case works when user asked question without selecting document
-            const documents = await Document.find({ user: user._id });
+    } else {
+      //This case works when user asked question without selecting document
 
-            const allUploadedDocuments = documents
-                .map(
-                    (doc) => `
+      const allUploadedDocuments = documents
+        .map(
+          (doc) => `
            Document: ${doc.title} ${doc.extractedText}`,
-                )
-                .join("\n\n--------------------\n\n");
+        )
+        .join("\n\n--------------------\n\n");
 
-            prompt = `
+      prompt = `
 You are an AI document assistant.
 
-Answer ONLY using the uploaded documents below.
-
-If the answer is not found in any uploaded document, reply:
-"I couldn't find that information in your uploaded documents."
+Instructions:
+1. Search the uploaded document(s) for the answer.
+2. If the answer is found, answer ONLY using the document(s). Do not add outside information.
+3. If the answer is NOT found, first say:
+   "This information is not available in your uploaded document(s). The following answer is based on my general knowledge."
+4. Then answer the question using your general knowledge.
+5. If the question requires both document information and general knowledge, clearly separate them.
 
 Uploaded Documents: ${allUploadedDocuments}
 
 Question:
 ${question}
 `;
-        }
-
-        console.log(prompt);
-
-        const response = await ai.models.generateContent({
-            model: "gemini-2.5-flash",
-            contents: prompt,
-        });
-
-        console.log(response.text);
-
-        const chat =await Chat.create({
-            user: user._id,
-            document: documentId,
-            question,
-            answer: response.text,
-        });
-
-        return Response.json({ chat }, { status: 200 });
-    } catch (error) {
-        return Response.json(
-            {
-                message: "Failed to reply your chat ",
-                error,
-            },
-            {
-                status: 500,
-            },
-        );
     }
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+    });
+
+    const chat = await Chat.create({
+      user: user._id,
+      ...(documentId ? { document: documentId } : {}),
+      question,
+      answer: response.text,
+    });
+
+    return Response.json({ chat }, { status: 200 });
+  } catch (error) {
+    console.error("Error in chat route:", error);
+    if (error instanceof Error && error.message === "Access token expired") {
+      return Response.json(
+        {
+          message: "Access token expired",
+        },
+        {
+          status: 401,
+        },
+      );
+    }
+
+    return Response.json(
+      {
+        message: "Failed to send chat",
+      },
+      {
+        status: 500,
+      },
+    );
+  }
 }

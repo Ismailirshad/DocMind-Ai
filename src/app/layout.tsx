@@ -28,9 +28,8 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-screen border border-yellow-100">
-        <FetchProfile />
-        {children}
+      <body className="min-h-screen">
+        <FetchProfile>{children}</FetchProfile>
         <Toaster />
       </body>
     </html>

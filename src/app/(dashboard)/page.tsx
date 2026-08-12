@@ -1,150 +1,412 @@
 "use client";
 
+import ChatSkeleton from "@/components/skeltones/ChatSkeleton";
 import { chatStore } from "@/store/chatStore";
 import { documentStore } from "@/store/documentStore";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 export default function ChatPage() {
-  const { askAi, loading, getChats, messages } = chatStore();
-  const { fetchDocuments, documents } = documentStore();
-  const [text, setText] = useState();
-  const [selectDoc, setSelectDoc] = useState();
+  const { askAi, loading: ChatLoading, getChats, messages } = chatStore();
+  const {
+    fetchDocuments,
+    documents,
+    loading: DocumentLoading,
+  } = documentStore();
+  const [text, setText] = useState("");
 
-  const handleSendChat = async (e) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [selectDoc, setSelectDoc] = useState(
+    () => searchParams.get("documentId") ?? "",
+  );
+
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSendChat = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!text) {
+    SendChat(text);
+  };
+
+  const SendChat = async (question: string = text) => {
+    if (!question) {
       return toast.error("Please enter the text");
     }
-    const res = await askAi(text, selectDoc);
-    setSelectDoc("");
+    await askAi(question, selectDoc);
     setText("");
-    console.log(res);
   };
 
   useEffect(() => {
-    getChats();
+    getChats(selectDoc);
     fetchDocuments();
-  }, [getChats]);
+  }, [getChats, selectDoc, fetchDocuments]);
 
-  console.log("documents are", documents);
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      SendChat(text);
+    }
+  };
 
+  const handleDefaultQuestion = async ({
+    question,
+    e,
+  }: {
+    question: string;
+    e: React.MouseEvent<HTMLButtonElement>;
+  }) => {
+    e.preventDefault();
+    await SendChat(question);
+  };
+
+  const loading = ChatLoading || DocumentLoading;
+  if (loading) return <ChatSkeleton />;
   return (
-    <main className="flex flex-col h-screen bg-black text-white">
+    <main
+      className="
+        flex flex-col
+        h-screen
+        mx-auto
+        text-white text-sm
+        sm:px-6
+        md:text-base
+        lg:px-8
+      "
+    >
       {/* Header */}
-      <div className="border-b border-zinc-800 px-6 py-4">
-        <h1 className="text-2xl font-bold">AI Document Chat</h1>
-        <p className="text-zinc-400 text-sm">
-          Ask questions about your uploaded documents
+      <div
+        className="
+          px-18 py-4
+          border-b border-zinc-800
+          lg:px-0
+        "
+      >
+        <h1
+          className="
+            text-xl font-bold
+            md:text-2xl
+          "
+        >
+          AI Document Assistant
+        </h1>
+        <p
+          className="
+            text-zinc-400 text-xs
+            md:text-sm
+          "
+        >
+          Ask questions, summarize, and explore your documents.
         </p>
       </div>
 
       {/* Chat */}
-      <div className="flex-1 overflow-y-auto">
-        {messages?.length > 0 ? (
-          <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-            {console.log("message now", messages)}
+      <div
+        className="
+          flex-1 overflow-y-auto
+          px-5
+        "
+      >
+        {documents.length === 0 && !loading ? (
+          <div
+            className="
+              flex
+              h-full
+              items-center justify-center
+            "
+          >
+            <div
+              className="
+                max-w-md
+                text-center
+              "
+            >
+              <div
+                className="
+                  mb-5
+                  text-7xl
+                "
+              >
+                📄
+              </div>
 
+              <h2
+                className="
+                  text-3xl font-bold
+                "
+              >
+                No documents yet
+              </h2>
+
+              <p
+                className="
+                  mt-3
+                  text-zinc-400
+                "
+              >
+                Upload your first PDF document to start chatting with AI.
+              </p>
+
+              <button
+                onClick={() => router.push("/documents")}
+                className="
+                  mt-8 px-6 py-3
+                  bg-blue-600
+                  rounded-xl
+                  hover:bg-blue-700 transition
+                "
+              >
+                Upload Document
+              </button>
+            </div>
+          </div>
+        ) : messages?.length > 0 ? (
+          <div
+            className="
+              max-w-4xl
+              mx-auto px-6 py-8 space-y-6
+            "
+          >
             {messages?.map((message) => (
-              <div key={message._id} className="space-y-3">
+              <div
+                key={message._id}
+                className="
+                  space-y-3
+                "
+              >
                 {/* User */}
 
-                <div className="flex justify-end">
-                  <div className="max-w-2xl flex flex-col items-end">
+                <div
+                  className="
+                    flex
+                    justify-end
+                  "
+                >
+                  <div
+                    className="
+                      flex flex-col
+                      max-w-2xl
+                      items-end
+                    "
+                  >
                     {message?.document?.title && (
-                      <span className="mb-1 text-xs text-zinc-400">
+                      <span
+                        className="
+                          mb-1
+                          text-xs text-zinc-400
+                        "
+                      >
                         📄 {message.document.title}
                       </span>
                     )}
 
-                    <div className="rounded-2xl bg-blue-600 px-5 py-4 text-white">
+                    <div
+                      className="
+                        px-5 py-4
+                        text-white
+                        bg-blue-600
+                        rounded-2xl
+                      "
+                    >
                       {message.question}
                     </div>
                   </div>
                 </div>
 
                 {/* AI */}
-                <div className="flex justify-start">
-                  <div className="bg-zinc-900 border border-zinc-800 rounded-2xl px-5 py-4 max-w-2xl">
+                <div
+                  className="
+                    flex
+                    justify-start
+                  "
+                >
+                  <div
+                    className="
+                      max-w-2xl
+                      px-5 py-4
+                      bg-zinc-900
+                      border border-zinc-800 rounded-2xl
+                    "
+                  >
                     {message.answer}
+                    000{" "}
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="h-full flex items-center justify-center">
-            <div className="text-center max-w-lg">
-              <h2 className="text-3xl font-bold mb-3">
-                👋 Let's chat with your documents
+          <div
+            className="
+              flex
+              h-full
+              items-center justify-center
+            "
+          >
+            <div
+              className="
+                max-w-lg
+                text-center
+              "
+            >
+              <h2
+                className="
+                  mb-3
+                  text-xl font-bold
+                  md:text-3xl
+                "
+              >
+                👋 Lets chat with your documents
               </h2>
 
-              <p className="text-zinc-400">
+              <p
+                className="
+                  text-zinc-400
+                "
+              >
                 Upload or select a document and ask questions about it.
               </p>
 
-              <div className="mt-8 grid gap-3">
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+              <div
+                className="
+                  grid
+                  mt-8
+                  gap-3
+                "
+              >
+                <button
+                  onClick={(e) =>
+                    handleDefaultQuestion({
+                      question: "Summarize this document",
+                      e,
+                    })
+                  }
+                  className="
+                    p-4
+                    bg-zinc-900
+                    border border-zinc-800 rounded-xl
+                  "
+                >
                   📄 Summarize this document
-                </div>
+                </button>
 
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
+                <button
+                  onClick={(e) =>
+                    handleDefaultQuestion({
+                      question: " Find important points",
+                      e,
+                    })
+                  }
+                  className="
+                    p-4
+                    bg-zinc-900
+                    border border-zinc-800 rounded-xl
+                  "
+                >
                   🔍 Find important points
-                </div>
-
-                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
-                  ❓ Ask any question about the document
-                </div>
+                </button>
               </div>
             </div>
           </div>
         )}
+        <div ref={bottomRef} />
       </div>
 
       {/* Input */}
-      <div className="border-t border-zinc-800 bg-black p-5">
-        <div className="max-w-4xl mx-auto bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-          <form onSubmit={handleSendChat}>
-            {/* Document Select */}
-            <select
-              value={selectDoc}
-              onChange={(e) => setSelectDoc(e.target.value)}
-              className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-3 mb-4 outline-none focus:border-blue-500"
-            >
-              <option>Select Document</option>
-              {documents?.documents?.map((doc) => (
-                <option key={doc._id} value={doc._id}>
-                  {doc.title}
-                </option>
-              ))}
-            </select>
-
-            {/* Message */}
-            <div className="flex items-end gap-3">
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                rows={2}
-                placeholder="Ask anything about your document..."
-                className="flex-1 bg-transparent resize-none outline-none placeholder:text-zinc-500"
-              />
-
-              <button
-                type="submit"
-                className="bg-blue-600 hover:bg-blue-700 rounded-xl px-6 py-3 transition"
+      {documents.length !== 0 && (
+        <div
+          className="
+            p-5
+            bg-transparent
+            border-none
+          "
+        >
+          <div
+            className="
+              max-w-4xl
+              mx-auto p-4
+              bg-zinc-900
+              border border-zinc-800 rounded-2xl
+            "
+          >
+            <form onSubmit={handleSendChat}>
+              {/* Document Select */}
+              <select
+                value={selectDoc}
+                onChange={(e) => setSelectDoc(e.target.value)}
+                className="
+                  w-full
+                  px-3 py-2.5
+                  text-sm
+                  bg-zinc-800
+                  border border-zinc-700 rounded-lg
+                  outline-none focus:border-blue-500
+                  sm:px-4 sm:py-3 sm:text-base
+                "
               >
-                Send
-              </button>
+                <option value="">Select Document</option>
+                {documents?.map((doc) => (
+                  <option key={doc._id} value={doc._id}>
+                    {doc.title}
+                  </option>
+                ))}
+              </select>
+
+              {/* Message */}
+              <div
+                className="
+                  flex
+                  mt-2
+                  items-end gap-3
+                "
+              >
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  rows={2}
+                  placeholder="Ask anything about your document..."
+                  className="
+                    flex-1
+                    bg-transparent
+                    resize-none
+                    outline-none placeholder:text-zinc-500
+                  "
+                />
+
+                <button
+                  type="submit"
+                  className="
+                    px-6 py-3
+                    bg-blue-600
+                    rounded-xl
+                    hover:bg-blue-700 transition
+                  "
+                >
+                  Send
+                </button>
+              </div>
+            </form>
+
+            <div
+              className="
+                flex
+                mt-3
+                text-xs text-zinc-500
+                justify-between
+              "
+            >
+              <span>AI responses may not always be accurate.</span>
+
+              <span>Enter ↵ to send</span>
             </div>
-          </form>
-
-          <div className="mt-3 flex justify-between text-xs text-zinc-500">
-            <span>AI responses may not always be accurate.</span>
-
-            <span>Enter ↵ to send</span>
           </div>
         </div>
-      </div>
+      )}
     </main>
   );
 }

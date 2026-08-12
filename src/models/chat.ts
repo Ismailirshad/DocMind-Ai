@@ -1,6 +1,18 @@
 import mongoose from "mongoose";
+import { IUser } from "./User";
+import { IDocument } from "./Document";
+import { Model } from "mongoose";
 
-const chatSchema = new mongoose.Schema(
+export interface IChat {
+  user: mongoose.Types.ObjectId | IUser;
+  document?: mongoose.Types.ObjectId | IDocument ;
+  question: string;
+  answer: string;
+  createdAt: Date; 
+  updatedAt: Date;
+}
+
+const chatSchema = new mongoose.Schema<IChat>(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -27,5 +39,5 @@ const chatSchema = new mongoose.Schema(
     timestamps: true,
   },
 );
-const Chat = mongoose.models.Chat || mongoose.model("Chat", chatSchema);
+const Chat = (mongoose.models.Chat as Model<IChat>) || mongoose.model<IChat>("Chat", chatSchema);
 export default Chat;

@@ -4,15 +4,23 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
 
+interface RegisterBody {
+  name: string;
+  email: string;
+  password: string;
+}
 export async function POST(req: Request) {
   try {
-    const body: { name: string; email: string; password: string } = await req.json();
+    const body: RegisterBody = await req.json();
     const { name, email, password } = body;
-   
-    await connectDB()
-    
-    if(!name || !email || !password){
-      return Response.json({message: "All fields are required"},{status: 400})
+
+    await connectDB();
+
+    if (!name || !email || !password) {
+      return Response.json(
+        { message: "All fields are required" },
+        { status: 400 },
+      );
     }
     if (password.length < 6) {
       return Response.json(
@@ -21,7 +29,7 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!name || name.trim().length < 3) {
+    if (name.trim().length < 3) {
       return Response.json(
         { message: "Name must be at least 3 characters long" },
         { status: 400 },
@@ -45,20 +53,47 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, salt);
     const user = await User.create({ name, email, password: hashedPassword });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET!, {
-      expiresIn: "7d",
+    const accessToken = jwt.sign({ id: user._id }, process.env.ACCESS_SECRET!, {
+      expiresIn: "15m",
     });
 
-    const response = NextResponse.json({ message: "User created successfully", user: {_id: user._id, name: user.name, email: user.email, role: user.role} }, { status: 201 })
-    response.cookies.set("token", token, {
+    const refreshToken = jwt.sign(
+      { id: user._id },
+      process.env.REFRESH_SECRET!,
+      {
+        expiresIn: "7d",
+      },
+    );
+
+    const response = NextResponse.json(
+      {
+        message: "User created successfully",
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        accessToken,
+      },
+      { status: 201 },
+    );
+
+    response.cookies.set("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV == "production",
-      sameSite: process.env.NODE_ENV == "production" ? "none" : "strict",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
+      sameSite: process.env.NODE_ENV == "production" ? "none" : "lax",
+      maxAge: 60 * 60 * 24 * 7,
     });
     return response;
-
   } catch (error: unknown) {
-    return Response.json({ message: error instanceof Error ? error.message: "Error in User registration" }, { status: 500 });
+    console.log("Error in User registration:", error)
+    return Response.json(
+      {
+        message:
+          error instanceof Error ? error.message : "Error in User registration",
+      },
+      { status: 500 },
+    );
   }
 }

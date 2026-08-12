@@ -9,15 +9,7 @@ export default function DashboardLayout({
     <div className="flex">
       <Sidebar />
 
-      <main
-        className="ml-71
-          min-h-screen
-          w-[calc(100%-16rem)]
-          bg-black
-          text-white
-           border border-red-500
-           "
-      >
+      <main className="flex-1  lg:ml-72 min-h-screen bg-black text-white">
         {children}
       </main>
     </div>

@@ -1,6 +1,18 @@
-import mongoose from "mongoose";
+import mongoose, { Model } from "mongoose";
+import { IUser } from "./User";
 
-const documentSchema = new mongoose.Schema(
+export interface IDocument {
+  user: mongoose.Types.ObjectId | IUser;
+  title: string;
+  category: string;
+  pdfUrl: string;
+  extractedText?: string;
+  pageCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+const documentSchema = new mongoose.Schema<IDocument>(
   {
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -37,5 +49,5 @@ const documentSchema = new mongoose.Schema(
   },
 );
 const Document =
-  mongoose.models.Document || mongoose.model("Document", documentSchema);
+  (mongoose.models.Document as Model<IDocument>) || mongoose.model<IDocument>("Document", documentSchema);
 export default Document;

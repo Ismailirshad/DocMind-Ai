@@ -2,32 +2,49 @@
 
 import { useEffect } from "react";
 import { userStore } from "@/store/userStore";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import MainLayoutSkeleton from "./skeltones/MainLayoutSkeleton";
 
-export default function FetchProfile() {
-  const { profile, user, checkingAuth } = userStore();
+interface FetchProfileProps {
+  children: React.ReactNode;
+}
+
+export default function FetchProfile({ children }: FetchProfileProps) {
+  const { profile, user, checkingAuth, refresh } = userStore();
   const router = useRouter();
 
   useEffect(() => {
-    profile();
-  }, []);
+    const checkUser = async () => {
+      try {
+        await refresh();
+        await profile();
+      } catch (error) {
+        console.error("Please login", error);
+      }
+    };
+    checkUser();
+  }, [refresh, profile]);
+
+  const pathname = usePathname();
 
   useEffect(() => {
-    if (!checkingAuth && user) {
-      router.push("/");
+    if (checkingAuth) return;
+    if (!user && pathname !== "/auth") {
+      router.replace("/auth");
     }
-    if (!checkingAuth && !user) {
-      router.push("/auth");
+
+    if (user && pathname === "/auth") {
+      router.replace("/");
     }
-  }, [user, checkingAuth]);
+  }, [user, checkingAuth, pathname, router]);
 
   if (checkingAuth) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <p className="text-white">Loading</p>
+        <MainLayoutSkeleton />
       </div>
     );
   }
 
-  return null;
+  return children;
 }
