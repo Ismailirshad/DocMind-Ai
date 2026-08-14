@@ -39,7 +39,7 @@ export default function Admin() {
     fetchAdminData();
   }, []);
 
-  if(loading) return <AdminSkeleton />
+  if (loading) return <AdminSkeleton />;
   return (
     <main className="min-h-screen bg-black text-white px-6 lg:px-8 py-6 text-sm md:text-base w-full max-w-7xl mx-auto">
       {/* Header */}

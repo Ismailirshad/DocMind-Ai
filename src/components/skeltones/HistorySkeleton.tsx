@@ -1,7 +1,6 @@
 export default function HistorySkeleton() {
   return (
     <main className="min-h-screen bg-black text-white px-6 lg:px-8 py-6">
-
       {/* Header */}
       <div className="mb-8 space-y-3">
         <div className="h-9 w-44 rounded-lg bg-zinc-800 animate-pulse" />
@@ -29,7 +28,6 @@ export default function HistorySkeleton() {
 
       {/* History List */}
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5">
-
         {Array.from({ length: 6 }).map((_, index) => (
           <div
             key={index}
@@ -57,7 +55,6 @@ export default function HistorySkeleton() {
             </div>
           </div>
         ))}
-
       </div>
     </main>
   );

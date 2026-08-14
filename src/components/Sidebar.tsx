@@ -1,6 +1,7 @@
 "use client";
 
 import { userStore } from "@/store/userStore";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -81,10 +82,14 @@ export default function Sidebar() {
 
         {/* Logo */}
         <div className="px-6 py-6 border-b border-zinc-800">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 flex items-center justify-center font-bold text-white">
-              D
-            </div>
+          <div className="flex items-center">
+            <Image
+              src="/docmind-ai_logo.png"
+              alt="DocMind AI logo"
+              width={90}
+              height={90}
+              loading="eager"
+            />
 
             <div>
               <h1 className="text-sm md:text-lg font-bold text-white">
@@ -180,7 +185,7 @@ export default function Sidebar() {
         <div className="p-4 border-t border-zinc-800">
           <div className="bg-zinc-900 rounded-2xl p-4 border border-zinc-800">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center text-white font-bold">
+              <div className="h-10 w-10 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold">
                 {user?.name?.charAt(0)}
               </div>
 

@@ -21,10 +21,8 @@ export default function DocumentsSkeleton() {
 
       {/* Upload section */}
       <div className="border-2 border-dashed border-zinc-800 rounded-3xl p-4 sm:p-6 lg:p-8 mb-10 bg-zinc-950">
-        
         {/* Upload box */}
         <div className="mt-8 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-zinc-800 bg-zinc-900/60 px-4 py-10">
-          
           {/* Upload icon */}
           <div className="h-16 w-16 rounded-2xl bg-zinc-800 animate-pulse" />
 

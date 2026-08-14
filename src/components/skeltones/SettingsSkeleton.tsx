@@ -11,11 +11,9 @@ export default function SettingsSkeleton() {
       {/* Profile Card */}
       <div className="relative">
         <div className="relative overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950">
-
           {/* Gradient Header */}
           <div className="p-5 md:p-10 bg-zinc-900">
             <div className="flex justify-between items-start gap-4">
-
               {/* User */}
               <div className="flex items-center gap-6">
                 {/* Avatar */}
@@ -47,7 +45,6 @@ export default function SettingsSkeleton() {
             <div className="h-6 w-40 rounded bg-zinc-800 animate-pulse mb-6" />
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
-
               {Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={index}
@@ -63,7 +60,6 @@ export default function SettingsSkeleton() {
                   <div className="mt-3 h-8 w-16 rounded bg-zinc-800 animate-pulse" />
                 </div>
               ))}
-
             </div>
           </div>
         </div>

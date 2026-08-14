@@ -115,7 +115,6 @@ export default function AuthPage() {
           <div className="flex-1 h-px bg-zinc-800"></div>
         </div>
 
-
         <button
           onClick={() => {
             window.location.href = "/api/auth/google";

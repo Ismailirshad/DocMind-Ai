@@ -10,7 +10,7 @@ interface ChatStore {
   askAi: (question: string, documentId: string | null) => Promise<void>;
   getChats: (documentId?: string | null) => Promise<void>;
 }
-interface Message {
+export interface Message {
   _id: string;
   user: string;
   question: string;
