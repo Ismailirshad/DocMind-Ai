@@ -21,30 +21,20 @@ api.interceptors.response.use(
   (response) => response,
 
   async (error) => {
-    // 1. Save the failed request
-    const originalRequest = error.config;
-    // we'll handle the error here
-    if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes("/api/auth/refresh")) {
-      // access token expired
-      originalRequest._retry = true;
-
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`,
-        {
-          withCredentials: true,
-        },
-      );
-      // to store newly created access token in zustand
-      userStore.setState({
-        accessToken: res.data.accessToken,
+    if (error.response?.status === 401) {
+      const { data } = await axios.get("/api/auth/refresh", {
+        withCredentials: true,
       });
 
-      // 4. Update failed request with new token
-      originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
+      userStore.setState({
+        accessToken: data.accessToken,
+      });
 
-      // 5. Retry the same request
-      return api(originalRequest);
+      error.config.headers.Authorization = `Bearer ${data.accessToken}`;
+
+      return api(error.config);
     }
+
     return Promise.reject(error);
   },
 );

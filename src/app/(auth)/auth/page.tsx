@@ -2,6 +2,7 @@
 import { userStore } from "@/store/userStore";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function AuthPage() {
   const [formType, setFormType] = useState<"login" | "signup">("login");
@@ -15,6 +16,10 @@ export default function AuthPage() {
 
   const handleSubmit = async () => {
     if (formType === "login") {
+      if (!formData.email || !formData.password) {
+        toast.error("All fields are required");
+        return
+      }
       const result = await login({
         email: formData.email,
         password: formData.password,
@@ -23,6 +28,10 @@ export default function AuthPage() {
         router.push("/");
       }
     } else {
+      if (!formData.name || !formData.email || !formData.password) {
+        toast.error("All fields are required");
+        return
+      }
       const result = await signup(formData);
       if (result) {
         router.push("/");
@@ -90,6 +99,12 @@ export default function AuthPage() {
               }
               className="w-full bg-black border border-zinc-800 rounded-lg px-4 py-3 text-white outline-none focus:border-blue-500"
             />
+            {formType === "signup" && (
+              <p className="mt-2 text-xs text-zinc-500">
+                Password must be at least 6 characters and include an uppercase
+                letter, lowercase letter, number, and special character.
+              </p>
+            )}
           </div>
 
           <button

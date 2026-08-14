@@ -6,7 +6,7 @@ export async function GET(req: Request) {
   try {
     await connectDB();
     const user = await protectRoute(req);
-    const documents = await Document.find({ user })
+    const documents = await Document.find({ user:user._id })
       .select("_id title pageCount createdAt pdfUrl category")
       .sort({ createdAt: -1 });
       
@@ -22,16 +22,22 @@ export async function GET(req: Request) {
     );
   } catch (error) {
     console.error("Error in fetching document route", error);
-    if (error instanceof Error && error.message === "Access token expired") {
-      return Response.json(
-        {
-          message: "Access token expired",
-        },
-        {
-          status: 401,
-        },
-      );
-    }
+       if (error instanceof Error) {
+         if (
+           error.message === "Unauthorized" ||
+           error.message === "Access token expired" ||
+           error.message === "Invalid access token"
+         ) {
+           return Response.json(
+             {
+               message: error.message,
+             },
+             {
+               status: 401,
+             },
+           );
+         }
+       }
 
     return Response.json(
       {

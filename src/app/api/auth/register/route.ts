@@ -14,14 +14,16 @@ export async function POST(req: Request) {
     const body: RegisterBody = await req.json();
     const { name, email, password } = body;
 
-    await connectDB();
-
+    
     if (!name || !email || !password) {
       return Response.json(
         { message: "All fields are required" },
         { status: 400 },
       );
     }
+    
+    await connectDB();
+
     if (password.length < 6) {
       return Response.json(
         { message: "Password must be at least 6 characters" },
@@ -41,6 +43,32 @@ export async function POST(req: Request) {
     if (!emailRegex.test(email)) {
       return Response.json(
         { message: "Invalid email format" },
+        { status: 400 },
+      );
+    }
+
+    // password validation : 1 uppercase, 1 lowercase, 1 number, 1 special character
+    if (!/[A-Z]/.test(password)) {
+      return Response.json(
+        { message: "Password must contain at least 1 uppercase letter" },
+        { status: 400 },
+      );
+    }
+    if (!/[a-z]/.test(password)) {
+      return Response.json(
+        { message: "Password must contain at least 1 lowercase letter" },
+        { status: 400 },
+      );
+    }
+    if (!/[0-9]/.test(password)) {
+      return Response.json(
+        { message: "Password must contain at least 1 number" },
+        { status: 400 },
+      );
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]\/+=~`]/.test(password)) {
+      return Response.json(
+        { message: "Password must contain at least 1 special character" },
         { status: 400 },
       );
     }
@@ -87,7 +115,7 @@ export async function POST(req: Request) {
     });
     return response;
   } catch (error: unknown) {
-    console.log("Error in User registration:", error)
+    console.log("Error in User registration:", error);
     return Response.json(
       {
         message:

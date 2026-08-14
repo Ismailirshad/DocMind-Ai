@@ -22,7 +22,17 @@ export async function protectRoute(req: Request) {
     }
     return user;
   } catch (error) {
-    console.log("Access token expired", error);
-    throw new Error("Access token expired");
+    // JWT token expired
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new Error("Access token expired");
+    }
+
+    // Invalid JWT
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new Error("Invalid access token");
+    }
+
+    // Other errors
+    throw error;
   }
 }
