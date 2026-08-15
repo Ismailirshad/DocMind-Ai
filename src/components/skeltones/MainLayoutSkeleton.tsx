@@ -2,11 +2,11 @@ import Image from "next/image";
 
 export default function MainLayoutSkeleton() {
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen w-full flex items-center justify-center">
       <div className="flex items-center gap-1 animate-pulse">
         {/* Logo */}
         <Image
-          src="/docmind-ai_logo.jpeg"
+          src="/docmind-ai_logo.png"
           alt="DocMind AI logo"
           width={110}
           height={110}
