@@ -27,6 +27,7 @@ export default function DocumentsPage() {
   const {
     uploadDocument,
     loading,
+    uploading,
     documentCount,
     fetchDocuments,
     documents,
@@ -45,7 +46,7 @@ export default function DocumentsPage() {
     }
   }, [userLoading, user, fetchDocuments]);
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!documentData.title || !documentData.category || !documentData.file) {
       toast.error("Please fill all the fileds");
       return;
@@ -55,7 +56,12 @@ export default function DocumentsPage() {
     formData.append("title", documentData.title);
     formData.append("category", documentData.category);
     formData.append("file", documentData.file);
-    uploadDocument(formData);
+    const document = await uploadDocument(formData);
+
+    if (!document) {
+      toast.error("Failed to upload document");
+      return;
+    }
 
     setDocumentData({
       title: "",
@@ -63,7 +69,7 @@ export default function DocumentsPage() {
       file: null,
     });
 
-    router.push("/");
+    router.push(`/?documentId=${document._id}`);
   };
 
   const searchDocument = documents.filter((doc) => {
@@ -213,10 +219,10 @@ export default function DocumentsPage() {
 
               <button
                 onClick={handleUpload}
-                disabled={loading}
+                disabled={uploading}
                 className="w-64 mx-auto px-6 py-3 font-medium bg-blue-600 rounded-xl hover:bg-blue-700 disabled:bg-zinc-700 transition md:col-span-2 lg:w-auto xl:col-span-1"
               >
-                {loading ? "⏳ Uploading..." : "Upload"}
+                {uploading ? "⏳ Uploading..." : "Upload"}
               </button>
             </div>
           </div>
@@ -281,9 +287,7 @@ export default function DocumentsPage() {
               </p>
             </div>
           ) : (
-            displayDocuments.map((doc) => (
-            <Documents key={doc._id} doc={doc} />
-            ))
+            displayDocuments.map((doc) => <Documents key={doc._id} doc={doc} />)
           )}
         </div>
       </div>

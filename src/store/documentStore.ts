@@ -7,12 +7,13 @@ import { create } from "zustand";
 interface DocumentStore {
   document: Document | null;
   loading: boolean;
+  uploading: boolean;
   documents: Document[];
   documentCount: number;
   indexedPages: number;
   categories: string[];
 
-  uploadDocument: (FormData: FormData) => Promise<void>;
+  uploadDocument: (FormData: FormData) => Promise<Document | undefined>;
   fetchDocuments: () => Promise<void>;
 }
 
@@ -38,13 +39,14 @@ interface IFetchDocumentsRes {
 export const documentStore = create<DocumentStore>((set, get) => ({
   document: null,
   loading: true,
+  uploading: false,
   documents: [],
   documentCount: 0,
   indexedPages: 0,
   categories: [],
 
   uploadDocument: async (formData) => {
-    set({ loading: true });
+    set({ uploading: true });
     try {
       const res = await api.post<IUploadDocumentRes>(
         "api/document/upload",
@@ -56,10 +58,12 @@ export const documentStore = create<DocumentStore>((set, get) => ({
       set((state) => ({
         documents: [...state.documents, res.data.document],
       }));
-      set({ loading: false });
-      toast.success("Document uploaded successfully");
+      set({ uploading: false });
+      toast.success("Document uploaded successfully")
+
+      return res.data.document;
     } catch (error) {
-      set({ loading: false });
+      set({ uploading: false });
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message);
         console.log(

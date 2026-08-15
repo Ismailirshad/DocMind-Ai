@@ -5,6 +5,7 @@ import { create } from "zustand";
 
 interface ChatStore {
   loading: boolean;
+  sending: boolean;
   messages: Message[];
   chatCount: number;
   askAi: (question: string, documentId: string | null) => Promise<void>;
@@ -33,11 +34,12 @@ interface IGetChatsResponse{
 
 export const chatStore = create<ChatStore>((set) => ({
   loading: true,
+  sending: false,
   messages: [],
   chatCount: 0,
 
   askAi: async (question, documentId) => {
-    set({ loading: true });
+    set({ sending: true });
     try {
       const res = await api.post<IAskAiResponse>(
         "api/chat/chat",
@@ -45,11 +47,11 @@ export const chatStore = create<ChatStore>((set) => ({
         { withCredentials: true },
       );
       set((state) => ({
-        loading: false,
+        sending: false,
         messages: [...state.messages, res.data.chat],
       }));
     } catch (error) {
-      set({ loading: false });
+      set({ sending: false });
 
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message);

@@ -9,13 +9,10 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 export default function ChatPage() {
-  const { askAi, loading: ChatLoading, getChats, messages } = chatStore();
-  const {
-    fetchDocuments,
-    documents,
-    loading: DocumentLoading,
-  } = documentStore();
+  const { askAi, sending, getChats, messages } = chatStore();
+  const { fetchDocuments, documents, loading } = documentStore();
   const [text, setText] = useState("");
+  const [switchingDocument, setSwitchingDocument] = useState(false);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -43,9 +40,8 @@ export default function ChatPage() {
   };
 
   useEffect(() => {
-    getChats(selectDoc);
     fetchDocuments();
-  }, [getChats, selectDoc, fetchDocuments]);
+  }, [fetchDocuments]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
@@ -65,7 +61,6 @@ export default function ChatPage() {
     await SendChat(question);
   };
 
-  const loading = ChatLoading || DocumentLoading;
   if (loading) return <ChatSkeleton />;
   return (
     <main className="flex flex-col h-screen mx-auto text-white text-sm sm:px-6 md:text-base lg:px-8">
@@ -156,10 +151,20 @@ export default function ChatPage() {
               {/* Document Select */}
               <select
                 value={selectDoc}
-                onChange={(e) => setSelectDoc(e.target.value)}
+                onChange={async (e) => {
+                  const value = e.target.value;
+                  setSelectDoc(value);
+                  setSwitchingDocument(true);
+                  await getChats(value);
+                  setSwitchingDocument(false);
+                }}
                 className="w-full px-3 py-2.5 text-sm bg-zinc-800 border border-zinc-700 rounded-lg outline-none focus:border-blue-500 sm:px-4 sm:py-3 sm:text-base"
               >
-                <option value="">Select Document</option>
+                <option value="">
+                  {switchingDocument
+                    ? "Switching Document..."
+                    : "Select Document"}
+                </option>
                 {documents?.map((doc) => (
                   <option key={doc._id} value={doc._id}>
                     {doc.title}
@@ -180,9 +185,12 @@ export default function ChatPage() {
 
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-blue-600 rounded-xl hover:bg-blue-700 transition"
+                  disabled={sending}
+                  className={
+                    "px-6 py-3 bg-blue-600 rounded-xl hover:bg-blue-700 transition"
+                  }
                 >
-                  Send
+                  {sending ? " Sending..." : "Send"}
                 </button>
               </div>
             </form>

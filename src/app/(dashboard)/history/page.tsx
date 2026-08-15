@@ -3,6 +3,7 @@ import api from "@/lib/axios";
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import HistorySkeleton from "@/components/skeltones/HistorySkeleton";
+import Link from "next/link";
 
 interface IHistoryRes {
   chatCounts: number;
@@ -12,6 +13,7 @@ interface IHistoryRes {
 interface History {
   chatCount: number;
   lastChat: string;
+  // document: string;
   _id: Document;
 }
 interface Document {
@@ -141,9 +143,12 @@ export default function HistoryPage() {
                   </div>
 
                   <div className="flex gap-3">
-                    <button className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700">
+                    <Link
+                      href={`/?documentId=${chat._id._id}`}
+                      className="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700"
+                    >
                       Continue
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
