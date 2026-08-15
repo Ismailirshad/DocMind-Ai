@@ -77,7 +77,9 @@ export async function GET(req: NextRequest) {
     );
 
     // 8. Create response
-    const response = NextResponse.redirect(new URL("/", req.url));
+    const response = NextResponse.redirect(
+      new URL("/", process.env.NEXT_PUBLIC_API_URL!),
+    );
 
     response.cookies.set("refreshToken", refreshToken, {
       httpOnly: true,
