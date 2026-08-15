@@ -45,6 +45,21 @@ export default function FetchProfile({ children }: FetchProfileProps) {
       </div>
     );
   }
+  // User is not authenticated and is trying to access
+  // a protected page.
+  if (!user && pathname !== "/auth") {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <MainLayoutSkeleton />
+      </div>
+    );
+  }
+
+  // User is authenticated but currently on /auth.
+  // Don't render the auth page while redirecting.
+  if (user && pathname === "/auth") {
+    return null;
+  }
 
   return children;
 }
