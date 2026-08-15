@@ -6,7 +6,7 @@ export default function MainLayoutSkeleton() {
       <div className="flex items-center gap-1 animate-pulse">
         {/* Logo */}
         <Image
-          src="/docmind-ai_logo.png"
+          src="/docmind_ai_logo.png"
           alt="DocMind AI logo"
           width={110}
           height={110}

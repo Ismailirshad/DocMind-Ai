@@ -84,7 +84,7 @@ export default function Sidebar() {
         <div className="px-6 py-6 border-b border-zinc-800">
           <div className="flex items-center">
             <Image
-              src="/docmind-ai_logo.png"
+              src="/docmind_ai_logo.png"
               alt="DocMind AI logo"
               width={90}
               height={90}
