@@ -1,53 +1,19 @@
 "use client";
-import api from "@/lib/axios";
 import { useEffect, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import HistorySkeleton from "@/components/skeltones/HistorySkeleton";
 import Link from "next/link";
-
-interface IHistoryRes {
-  chatCounts: number;
-  history: History[];
-  documentCounts: number;
-}
-interface History {
-  chatCount: number;
-  lastChat: string;
-  // document: string;
-  _id: Document;
-}
-interface Document {
-  _id: string;
-  user: string;
-  title: string;
-  category: string;
-  pdfUrl: string;
-  pageCount: number;
-  extractedText: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { chatStore } from "@/store/chatStore";
 
 export default function HistoryPage() {
-  const [history, setHistory] = useState<History[]>([]);
-  const [chatCount, setChatCount] = useState(0);
-  const [documentsCount, setDocumentsCount] = useState(0);
   const [searchChat, setSearchChat] = useState("");
-  const [loading, setLoading] = useState(false);
+
+  const { getHistory, history, documentsCount, loading, chatCount } =
+    chatStore();
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      setLoading(true);
-      const res = await api.get<IHistoryRes>("api/history", {
-        withCredentials: true,
-      });
-      setHistory(res.data.history);
-      setChatCount(res.data.chatCounts);
-      setDocumentsCount(res.data.documentCounts);
-      setLoading(false);
-    };
-    fetchHistory();
-  }, []);
+    getHistory();
+  }, [getHistory]);
 
   const searchHistory = history.filter((chat) => {
     return chat?._id?.title.toLowerCase().includes(searchChat.toLowerCase());

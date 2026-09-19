@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { memo, useState } from "react";
 import PdfViewerModal from "./PdfViewerModal";
 
@@ -42,18 +41,11 @@ const Documents = memo(function Documents({ doc }: DocumentProps) {
       </div>
 
       <div className="flex mt-5 gap-2">
-        <Link
-          href={`/?documentId=${doc._id}`}
-          className="flex-1 py-2 px-2 bg-blue-600 rounded-lg hover:bg-blue-700"
-        >
-          💬 Chat
-        </Link>
-
         <button
           onClick={() => handleView(doc)}
           className="flex-1 py-2 bg-zinc-800 rounded-lg hover:bg-zinc-700"
         >
-          👁 View
+          View
         </button>
 
         <PdfViewerModal
