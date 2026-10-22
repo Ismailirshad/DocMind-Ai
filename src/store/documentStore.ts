@@ -49,7 +49,7 @@ export const documentStore = create<DocumentStore>((set, get) => ({
     set({ uploading: true });
     try {
       const res = await api.post<IUploadDocumentRes>(
-        "api/document/upload",
+        "/api/document/upload",
         formData,
         {
           withCredentials: true,
@@ -59,7 +59,7 @@ export const documentStore = create<DocumentStore>((set, get) => ({
         documents: [...state.documents, res.data.document],
       }));
       set({ uploading: false });
-      toast.success("Document uploaded successfully")
+      toast.success("Document uploaded successfully");
 
       return res.data.document;
     } catch (error) {
@@ -79,7 +79,7 @@ export const documentStore = create<DocumentStore>((set, get) => ({
     set({ loading: true });
     try {
       const res = await api.get<IFetchDocumentsRes>(
-        "api/document/fetchdocuments",
+        "/api/document/fetchdocuments",
         {
           withCredentials: true,
         },

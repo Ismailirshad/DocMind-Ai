@@ -81,7 +81,7 @@ export const userStore = create<userStore>((set) => ({
 
     try {
       const res = await axios.post<ISignupAndLoginRes>(
-        "api/auth/login",
+        "/api/auth/login",
         { email, password },
         { withCredentials: true },
       );
@@ -106,7 +106,7 @@ export const userStore = create<userStore>((set) => ({
   },
   logout: async () => {
     try {
-      await axios.post("api/auth/logout", {}, { withCredentials: true });
+      await axios.post("/api/auth/logout", {}, { withCredentials: true });
       set({ user: null });
       toast.success("logged out successfully");
     } catch (error) {
@@ -121,7 +121,7 @@ export const userStore = create<userStore>((set) => ({
   profile: async () => {
     set({ checkingAuth: true });
     try {
-      const res = await api.get<IProfileRes>("api/auth/profile");
+      const res = await api.get<IProfileRes>("/api/auth/profile");
       set({ user: res.data.user, checkingAuth: false });
     } catch (error) {
       set({ checkingAuth: false, user: null });
@@ -135,7 +135,7 @@ export const userStore = create<userStore>((set) => ({
   },
   refresh: async () => {
     try {
-      const res = await api.get<IRefreshRes>("api/auth/refresh");
+      const res = await api.get<IRefreshRes>("/api/auth/refresh");
       set({ accessToken: res.data.accessToken });
     } catch (error) {
       if (axios.isAxiosError(error)) {

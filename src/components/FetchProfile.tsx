@@ -12,8 +12,11 @@ interface FetchProfileProps {
 export default function FetchProfile({ children }: FetchProfileProps) {
   const { profile, user, checkingAuth, refresh } = userStore();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
+    if (pathname === "/auth") return;
+
     const checkUser = async () => {
       try {
         await refresh();
@@ -22,21 +25,24 @@ export default function FetchProfile({ children }: FetchProfileProps) {
         console.error("Please login", error);
       }
     };
-    checkUser();
-  }, [refresh, profile]);
 
-  const pathname = usePathname();
+    checkUser();
+  }, [pathname, refresh, profile]);
 
   useEffect(() => {
+    if (pathname === "/auth") return;
     if (checkingAuth) return;
-    if (!user && pathname !== "/auth") {
+
+    if (!user) {
       router.replace("/auth");
     }
-
-    if (user && pathname === "/auth") {
-      router.replace("/");
-    }
   }, [user, checkingAuth, pathname, router]);
+
+  // Login page is public.
+  // Do not wait for authentication before showing it.
+  if (pathname === "/auth") {
+    return children;
+  }
 
   if (checkingAuth) {
     return (
@@ -45,20 +51,13 @@ export default function FetchProfile({ children }: FetchProfileProps) {
       </div>
     );
   }
-  // User is not authenticated and is trying to access
-  // a protected page.
-  if (!user && pathname !== "/auth") {
+
+  if (!user) {
     return (
       <div className="flex items-center justify-center h-screen">
         <MainLayoutSkeleton />
       </div>
     );
-  }
-
-  // User is authenticated but currently on /auth.
-  // Don't render the auth page while redirecting.
-  if (user && pathname === "/auth") {
-    return null;
   }
 
   return children;

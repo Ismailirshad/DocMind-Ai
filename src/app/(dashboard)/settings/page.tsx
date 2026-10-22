@@ -212,122 +212,307 @@ export default function SettingsPage() {
 
             <div
               className="
-                grid grid-cols-2
-                gap-6
-                sm:grid-cols-3
-              "
+    grid
+    grid-cols-1
+    sm:grid-cols-3
+    gap-4
+    sm:gap-5
+  "
             >
-              {/* Card */}
-
+              {/* Documents */}
               <div
                 className="
-                  p-6
-                  bg-gradient-to-b from-zinc-900 to-zinc-950
-                  rounded-2xl border border-zinc-800
-                  hover:border-blue-500 transition
-                "
+      group relative overflow-hidden
+      rounded-2xl
+      border border-zinc-800/80
+      bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950
+      p-5 sm:p-6
+      shadow-lg shadow-black/10
+      transition-all duration-300
+      hover:-translate-y-1
+      hover:border-blue-500/40
+      hover:shadow-xl hover:shadow-blue-500/5
+    "
               >
+                {/* Glow */}
                 <div
                   className="
-                    text-xl
-                    md:text-4xl
-                  "
-                >
-                  📄
+        pointer-events-none absolute
+        -right-10 -top-10
+        h-24 w-24
+        rounded-full
+        bg-blue-500/10
+        blur-3xl
+        transition-all duration-500
+        group-hover:bg-blue-500/20
+      "
+                />
+
+                <div className="relative flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-400">
+                      Documents
+                    </p>
+
+                    <h3
+                      className="
+            mt-2
+            text-3xl sm:text-4xl
+            font-bold
+            tracking-tight
+            text-zinc-100
+          "
+                    >
+                      {documentCount}
+                    </h3>
+
+                    <p className="mt-1 text-xs text-zinc-500">
+                      Uploaded documents
+                    </p>
+                  </div>
+
+                  <div
+                    className="
+          flex h-11 w-11 sm:h-12 sm:w-12
+          items-center justify-center
+          rounded-xl
+          border border-blue-500/20
+          bg-blue-500/10
+          text-blue-400
+          transition-transform duration-300
+          group-hover:scale-105
+        "
+                  >
+                    <svg
+                      className="h-5 w-5 sm:h-6 sm:w-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.7"
+                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Z"
+                      />
+
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.7"
+                        d="M14 2v6h6M8 13h8M8 17h5"
+                      />
+                    </svg>
+                  </div>
                 </div>
 
-                <p
+                {/* Accent */}
+                <div
                   className="
-                    mt-4
-                    text-zinc-400
-                  "
-                >
-                  Documents
-                </p>
-
-                <h3
-                  className="
-                    mt-2
-                    text-xl font-bold
-                    md:text-3xl
-                  "
-                >
-                  {documentCount}
-                </h3>
+        absolute bottom-0 left-0
+        h-[2px] w-0
+        bg-blue-500
+        transition-all duration-500
+        group-hover:w-full
+      "
+                />
               </div>
 
+              {/* Indexed Pages */}
               <div
                 className="
-                  p-6
-                  bg-gradient-to-b from-zinc-900 to-zinc-950
-                  rounded-2xl border border-zinc-800
-                  hover:border-cyan-500 transition
-                "
+      group relative overflow-hidden
+      rounded-2xl
+      border border-zinc-800/80
+      bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950
+      p-5 sm:p-6
+      shadow-lg shadow-black/10
+      transition-all duration-300
+      hover:-translate-y-1
+      hover:border-cyan-500/40
+      hover:shadow-xl hover:shadow-cyan-500/5
+    "
               >
+                {/* Glow */}
                 <div
                   className="
-                    text-xl
-                    md:text-4xl
-                  "
-                >
-                  📚
+        pointer-events-none absolute
+        -right-10 -top-10
+        h-24 w-24
+        rounded-full
+        bg-cyan-500/10
+        blur-3xl
+        transition-all duration-500
+        group-hover:bg-cyan-500/20
+      "
+                />
+
+                <div className="relative flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-400">
+                      Indexed Pages
+                    </p>
+
+                    <h3
+                      className="
+            mt-2
+            text-3xl sm:text-4xl
+            font-bold
+            tracking-tight
+            text-zinc-100
+          "
+                    >
+                      {indexedPages}
+                    </h3>
+
+                    <p className="mt-1 text-xs text-zinc-500">
+                      Pages processed by AI
+                    </p>
+                  </div>
+
+                  <div
+                    className="
+          flex h-11 w-11 sm:h-12 sm:w-12
+          items-center justify-center
+          rounded-xl
+          border border-cyan-500/20
+          bg-cyan-500/10
+          text-cyan-400
+          transition-transform duration-300
+          group-hover:scale-105
+        "
+                  >
+                    <svg
+                      className="h-5 w-5 sm:h-6 sm:w-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.7"
+                        d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6Z"
+                      />
+
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.7"
+                        d="M8 8h8M8 12h8M8 16h5"
+                      />
+                    </svg>
+                  </div>
                 </div>
 
-                <p
+                {/* Accent */}
+                <div
                   className="
-                    mt-4
-                    text-zinc-400
-                  "
-                >
-                  Indexed Pages
-                </p>
-
-                <h3
-                  className="
-                    mt-2
-                    text-xl font-bold
-                    md:text-3xl
-                  "
-                >
-                  {indexedPages}
-                </h3>
+        absolute bottom-0 left-0
+        h-[2px] w-0
+        bg-cyan-500
+        transition-all duration-500
+        group-hover:w-full
+      "
+                />
               </div>
 
+              {/* AI Chats */}
               <div
                 className="
-                  p-6
-                  bg-gradient-to-b from-zinc-900 to-zinc-950
-                  rounded-2xl border border-zinc-800
-                  hover:border-indigo-500 transition
-                "
+      group relative overflow-hidden
+      rounded-2xl
+      border border-zinc-800/80
+      bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950
+      p-5 sm:p-6
+      shadow-lg shadow-black/10
+      transition-all duration-300
+      hover:-translate-y-1
+      hover:border-indigo-500/40
+      hover:shadow-xl hover:shadow-indigo-500/5
+    "
               >
+                {/* Glow */}
                 <div
                   className="
-                    text-xl
-                    md:text-4xl
-                  "
-                >
-                  💬
+        pointer-events-none absolute
+        -right-10 -top-10
+        h-24 w-24
+        rounded-full
+        bg-indigo-500/10
+        blur-3xl
+        transition-all duration-500
+        group-hover:bg-indigo-500/20
+      "
+                />
+
+                <div className="relative flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-zinc-400">
+                      AI Chats
+                    </p>
+
+                    <h3
+                      className="
+            mt-2
+            text-3xl sm:text-4xl
+            font-bold
+            tracking-tight
+            text-zinc-100
+          "
+                    >
+                      {chatCount}
+                    </h3>
+
+                    <p className="mt-1 text-xs text-zinc-500">
+                      AI conversations
+                    </p>
+                  </div>
+
+                  <div
+                    className="
+          flex h-11 w-11 sm:h-12 sm:w-12
+          items-center justify-center
+          rounded-xl
+          border border-indigo-500/20
+          bg-indigo-500/10
+          text-indigo-400
+          transition-transform duration-300
+          group-hover:scale-105
+        "
+                  >
+                    <svg
+                      className="h-5 w-5 sm:h-6 sm:w-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.7"
+                        d="M21 11.5a8.38 8.38 0 0 1-9 8.5 9.6 9.6 0 0 1-4-.8L3 21l1.8-4.2A8.2 8.2 0 0 1 3 11.5 8.5 8.5 0 0 1 12 3a8.5 8.5 0 0 1 9 8.5Z"
+                      />
+
+                      <path
+                        strokeLinecap="round"
+                        strokeWidth="1.7"
+                        d="M8 11h.01M12 11h.01M16 11h.01"
+                      />
+                    </svg>
+                  </div>
                 </div>
 
-                <p
+                {/* Accent */}
+                <div
                   className="
-                    mt-4
-                    text-zinc-400
-                  "
-                >
-                  AI Chats
-                </p>
-
-                <h3
-                  className="
-                    mt-2
-                    text-xl font-bold
-                    md:text-3xl
-                  "
-                >
-                  {chatCount}
-                </h3>
+        absolute bottom-0 left-0
+        h-[2px] w-0
+        bg-indigo-500
+        transition-all duration-500
+        group-hover:w-full
+      "
+                />
               </div>
             </div>
           </div>

@@ -1,12 +1,24 @@
 import { protectRoute } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import Chat from "@/models/chat";
-import Document, { IDocument } from "@/models/Document";
+import Document from "@/models/Document";
+import { Types } from "mongoose";
+
+interface IchatStats {
+  _id:  Types.ObjectId;
+  chatCount: number;
+  lastChat?: Date;
+}
+
+interface Idocuments {
+  _id:  Types.ObjectId;
+  title: string;
+}
 
 interface IHistory {
-  _id: IDocument | null;
+  _id: Idocuments;
   chatCount: number;
-  lastChat: Date;
+  lastChat?: Date;
 }
 
 export async function GET(req: Request) {
@@ -14,26 +26,40 @@ export async function GET(req: Request) {
     await connectDB();
     const user = await protectRoute(req);
 
-    const documents = await Document.find({ user: user._id });
+    const [documents, chatStats, chatCounts, documentCounts]=
+    await Promise.all([
+      Document.find({ user: user._id }).select("_id title"),
+  
+      Chat.aggregate<IchatStats>([
+        { $match: { user: user._id } },
+        {
+          $group: {
+            _id: "$document",
+            chatCount: { $sum: 1 },
+            lastChat: { $max: "$createdAt" },
+          },
+        },
+      ]),
+  
+      Chat.countDocuments({ user: user._id }),
+  
+      Document.countDocuments({ user: user._id }),
+    ]);
+  
+  const statsByDocument = new Map<string, IchatStats>(
+    chatStats.map((stat) => [String(stat._id), stat]),
+  );
+  
+  const history: IHistory[] = documents.map((document) => {
+    const stats = statsByDocument.get(String(document._id));
+  
+    return {
+      _id: document,
+      chatCount: stats?.chatCount ?? 0,
+      lastChat: stats?.lastChat,
+    };
+  });
 
-    const history: IHistory[] = [];
-
-    for (const document of documents) {
-      const chats = await Chat.find({
-        user: user._id,
-        document: document._id,
-      }).sort({ createdAt: -1 });
-
-      history.push({
-        _id: document,
-        chatCount: chats.length,
-        lastChat: chats[0]?.createdAt,
-      });
-    }
-
-    const chatCounts = await Chat.countDocuments({ user: user._id });
-
-    const documentCounts = await Document.countDocuments({ user: user._id });
 
     return Response.json(
       { history, chatCounts, documentCounts },

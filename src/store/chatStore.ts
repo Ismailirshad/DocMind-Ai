@@ -36,14 +36,7 @@ interface IGetChatsResponse {
 }
 export interface HistoryDocument {
   _id: string;
-  user: string;
   title: string;
-  category: string;
-  pdfUrl: string;
-  pageCount: number;
-  extractedText: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface History {
@@ -69,7 +62,7 @@ export const chatStore = create<ChatStore>((set) => ({
     set({ sending: true });
     try {
       const res = await api.post<IAskAiResponse>(
-        "api/chat/chat",
+        "/api/chat/chat",
         { question, documentId },
         { withCredentials: true },
       );
@@ -90,7 +83,7 @@ export const chatStore = create<ChatStore>((set) => ({
   getChats: async (documentId) => {
     set({ loading: true });
     try {
-      const res = await api.get<IGetChatsResponse>("api/chat/getchat", {
+      const res = await api.get<IGetChatsResponse>("/api/chat/getchat", {
         params: documentId ? { documentId } : {},
         withCredentials: true,
       });
@@ -111,7 +104,7 @@ export const chatStore = create<ChatStore>((set) => ({
   getHistory: async () => {
     set({ loading: true });
     try {
-      const res = await api.get<IHistoryRes>("api/history", {
+      const res = await api.get<IHistoryRes>("/api/history", {
         withCredentials: true,
       });
       set({

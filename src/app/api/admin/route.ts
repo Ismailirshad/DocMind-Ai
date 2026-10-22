@@ -27,46 +27,53 @@ export async function GET(req: Request) {
         { status: 500 },
       );
 
-    const usersData: IUsersData[] = [];
-
     const users = await User.find()
       .select("name email _id role")
       .sort({ createdAt: -1 });
 
-    for (const user of users) {
-      const documents = await Document.find({ user: user._id });
-      const documentsCount = documents.length;
+    const documents = await Document.find().select("user pageCount");
+    const chats = await Chat.find().select("user");
 
-      const indexedPages = documents.reduce(
+    const usersData: IUsersData[] = users.map((user) => {
+      const userDocuments = documents.filter(
+        (doc) => doc.user.toString() === user._id.toString(),
+      );
+
+      const userChats = chats.filter(
+        (chat) => chat.user.toString() === user._id.toString(),
+      );
+
+      const indexedPages = userDocuments.reduce(
         (acc, doc) => acc + doc.pageCount,
         0,
       );
 
-      const chats = await Chat.find({ user: user._id });
-      const chatCount = chats.length * 2;
-
-      usersData.push({
+      return {
         _id: user._id,
         role: user.role,
         name: user.name,
         email: user.email,
-        documentsCount,
+        documentsCount: userDocuments.length,
         indexedPages,
-        chatCount,
-      });
-    }
+        chatCount: userChats.length * 2,
+      };
+    });
 
-    const totalUsers = await User.countDocuments();
-    const totalDocuments = await Document.countDocuments();
+    const totalUsers = users.length;
+    const totalDocuments = documents.length;
 
-    const allDocuments = await Document.find().select("pageCount");
-    const totalIndexedPages = await allDocuments.reduce(
+    const totalIndexedPages = documents.reduce(
       (acc, doc) => acc + doc.pageCount,
       0,
     );
 
     return Response.json(
-      { usersData, totalUsers, totalDocuments, totalIndexedPages },
+      {
+        usersData,
+        totalUsers,
+        totalDocuments,
+        totalIndexedPages,
+      },
       { status: 200 },
     );
   } catch (error) {

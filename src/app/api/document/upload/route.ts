@@ -26,9 +26,25 @@ export async function POST(req: Request) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const data = await pdfParse(buffer);
-    const extractedData: string = data.text;
-    const pageCount: number = data.numpages;
+    let extractedData = "";
+    let pageCount = 0;
+
+    try {
+      const data = await pdfParse(buffer);
+
+      extractedData = data.text;
+      pageCount = data.numpages;
+    } catch (error) {
+      console.error("PDF parsing failed:", error);
+
+      return Response.json(
+        {
+          message:
+            "Unable to process this PDF. The file may be corrupted or use an unsupported PDF structure.",
+        },
+        { status: 400 },
+      );
+    }
 
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
       cloudinary.uploader

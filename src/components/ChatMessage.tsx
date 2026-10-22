@@ -1,4 +1,5 @@
 import { memo } from "react";
+import AIResponse from "./AiResponse";
 
 interface ChatMessageProps {
   message: {
@@ -30,8 +31,7 @@ const ChatMessage = memo(function ChatMessage({ message }: ChatMessageProps) {
       {/* AI */}
       <div className="flex justify-start">
         <div className="max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 px-5 py-4">
-          {message.answer}
-          000{" "}
+          <AIResponse content={message.answer} />
         </div>
       </div>
     </div>
