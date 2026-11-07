@@ -5,20 +5,47 @@ import Document from "@/models/Document";
 import { UploadApiResponse } from "cloudinary";
 // @ts-expect-error pdf-parse/lib/pdf-parse does not provide TypeScript declarations
 import pdfParse from "pdf-parse/lib/pdf-parse";
+import DocumentChunk from "@/models/DocumentChunk";
+import { splitTextIntoChunks } from "@/lib/chunking";
+import { generateEmbedding } from "@/lib/embedding";
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<Response> {
   try {
     await connectDB();
-    const formData = await req.formData();
     const user = await protectRoute(req);
+    const formData = await req.formData();
 
-    const title = formData.get("title") as string;
-    const category = formData.get("category") as string;
-    const file = formData.get("file") as File;
+    const title = formData.get("title")
+    const category = formData.get("category")
+    const file = formData.get("file")
 
-    if (!title || !category || !file) {
+    if (typeof title !== "string" ||
+      typeof category !== "string" ||
+      !(file instanceof File)
+    ) {
       return Response.json(
-        { message: "Required fields are missing" },
+        { message: "Required fields are missing or invalid" },
+        { status: 400 },
+      );
+    }
+
+    if (!title || !category || !file || file.size === 0) {
+      return Response.json(
+        { message: "Title, category and a valid PDF are required" },
+        { status: 400 },
+      );
+    }
+
+    if (file.type !== "application/pdf") {
+      return Response.json(
+        { message: "Only PDF files are allowed" },
+        { status: 400 },
+      );
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      return Response.json(
+        { message: "PDF file size must be less than 10 MB" },
         { status: 400 },
       );
     }
@@ -51,7 +78,7 @@ export async function POST(req: Request) {
         .upload_stream(
           {
             folder: "Docmind-Ai",
-            public_id: file.name.replace(".pdf", ""),
+            public_id: crypto.randomUUID(),
           },
           (error, result) => {
             if (error) {
@@ -68,12 +95,49 @@ export async function POST(req: Request) {
 
     const document = await Document.create({
       user: user._id,
-      title: title,
-      category: category,
+      title,
+      category,
       pdfUrl: result.secure_url,
       extractedText: extractedData,
-      pageCount: pageCount,
+      pageCount,
     });
+
+    if (extractedData.length > 0) {
+      // 1. Split the extracted PDF text into chunks
+      const chunks = splitTextIntoChunks(extractedData);
+
+      // 2. Generate an embedding for each chunk
+      const chunkDocuments = await Promise.all(
+        chunks.map(async (chunk) => {
+          const embedding = await generateEmbedding(
+            chunk.content,
+            "RETRIEVAL_DOCUMENT"
+          );
+
+          return {
+            document: document._id,
+            user: user._id,
+            content: chunk.content,
+            embedding,
+            chunkIndex: chunk.chunkIndex,
+          };
+
+        })
+      );
+      if (!extractedData.trim()) {
+        return Response.json(
+          {
+            message: "No readable text found in this PDF.",
+          },
+          { status: 400 },
+        );
+      }
+
+      // 3. Save all chunks and embeddings in MongoDB
+      if (chunkDocuments.length > 0) {
+        await DocumentChunk.insertMany(chunkDocuments);
+      }
+    }
 
     return Response.json(
       {

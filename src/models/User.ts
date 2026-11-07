@@ -43,6 +43,8 @@ const userSchema = new mongoose.Schema<IUser>(
   },
   { timestamps: true },
 );
+
+userSchema.index({ createdAt: -1 });
 const User =
   (mongoose.models.User as Model<IUser>) ||
   mongoose.model<IUser>("User", userSchema);

@@ -34,13 +34,13 @@ export default function AIResponse({ content }: AIResponseProps) {
           ),
 
           ul: ({ children }) => (
-            <ul className="mb-5 ml-6 list-disc space-y-2 pl-5 text-zinc-300">
+            <ul className="mb-5 ml-4 list-disc space-y-2 pl-2 text-zinc-300 sm:ml-6 sm:pl-3">
               {children}
             </ul>
           ),
-
+          
           ol: ({ children }) => (
-            <ol className="mb-5 ml-6 list-decimal space-y-2 pl-5 text-zinc-300">
+            <ol className="mb-5 ml-4 list-decimal space-y-2 pl-2 text-zinc-300 sm:ml-6 sm:pl-3">
               {children}
             </ol>
           ),

@@ -1,5 +1,4 @@
 import api from "@/lib/axios";
-import { IDocument } from "@/models/Document";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { create } from "zustand";
@@ -8,6 +7,7 @@ interface DocumentStore {
   document: Document | null;
   loading: boolean;
   uploading: boolean;
+  hasFetched: boolean;
   documents: Document[];
   documentCount: number;
   indexedPages: number;
@@ -40,13 +40,14 @@ export const documentStore = create<DocumentStore>((set, get) => ({
   document: null,
   loading: true,
   uploading: false,
+  hasFetched: false,
   documents: [],
   documentCount: 0,
   indexedPages: 0,
   categories: [],
 
   uploadDocument: async (formData) => {
-    set({ uploading: true });
+    set({ uploading: true, hasFetched: false, });
     try {
       const res = await api.post<IUploadDocumentRes>(
         "/api/document/upload",
@@ -58,12 +59,12 @@ export const documentStore = create<DocumentStore>((set, get) => ({
       set((state) => ({
         documents: [...state.documents, res.data.document],
       }));
-      set({ uploading: false });
+      set({ uploading: false, hasFetched: true });
       toast.success("Document uploaded successfully");
 
       return res.data.document;
     } catch (error) {
-      set({ uploading: false });
+      set({ uploading: false, hasFetched: true });
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message);
         console.log(
@@ -77,6 +78,12 @@ export const documentStore = create<DocumentStore>((set, get) => ({
   },
   fetchDocuments: async () => {
     set({ loading: true });
+    const { hasFetched } = get();
+
+    if (hasFetched) {
+      set({ loading: false })
+      return
+    }
     try {
       const res = await api.get<IFetchDocumentsRes>(
         "/api/document/fetchdocuments",
@@ -86,13 +93,14 @@ export const documentStore = create<DocumentStore>((set, get) => ({
       );
       set({
         loading: false,
+        hasFetched: true,
         documents: res.data.documents,
         documentCount: res.data.docCounts,
         indexedPages: res.data.indexedPages,
         categories: res.data.categories,
       });
     } catch (error) {
-      set({ loading: false });
+      set({ loading: false, hasFetched: true, });
       if (axios.isAxiosError(error)) {
         console.log(
           error.response?.data?.message,

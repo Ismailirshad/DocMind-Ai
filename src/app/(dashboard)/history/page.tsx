@@ -15,11 +15,9 @@ export default function HistoryPage() {
     getHistory();
   }, [getHistory]);
 
-  const searchHistory = history.filter((chat) => {
-    return chat?._id?.title.toLowerCase().includes(searchChat.toLowerCase());
-  });
-
-  const displayHistory = searchChat ? searchHistory : history;
+  const displayHistory = history.filter((chat) =>
+    chat?._id?.title.toLowerCase().includes(searchChat.trim().toLowerCase()),
+  );
 
   if (loading) return <HistorySkeleton />;
   return (
@@ -46,7 +44,7 @@ export default function HistoryPage() {
       </div>
 
       {/* Stats */}
-      {!loading && !searchChat && (
+      {!loading && !searchChat.trim() && (
         <div
           className="
     grid
@@ -457,8 +455,8 @@ export default function HistoryPage() {
                     <span>
                       {chat.lastChat
                         ? formatDistanceToNow(new Date(chat.lastChat), {
-                            addSuffix: true,
-                          })
+                          addSuffix: true,
+                        })
                         : "No activity yet"}
                     </span>
                   </div>
@@ -529,10 +527,10 @@ export default function HistoryPage() {
       <div className="hidden flex-col py-32 items-center justify-center">
         <div className="mb-5 text-7xl">💬</div>
 
-        <h2 className="text-2xl font-semibold">No conversations yet</h2>
-
-        <p className="mt-3 text-zinc-400">
-          Upload a document and start chatting with AI.
+        <p className="mt-2 text-zinc-400">
+          {searchChat.trim()
+            ? `No conversations match "${searchChat}"`
+            : "Upload a document and start chatting with AI."}
         </p>
       </div>
     </main>

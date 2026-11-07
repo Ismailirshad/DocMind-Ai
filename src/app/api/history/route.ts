@@ -5,13 +5,13 @@ import Document from "@/models/Document";
 import { Types } from "mongoose";
 
 interface IchatStats {
-  _id:  Types.ObjectId;
+  _id: Types.ObjectId;
   chatCount: number;
   lastChat?: Date;
 }
 
 interface Idocuments {
-  _id:  Types.ObjectId;
+  _id: Types.ObjectId;
   title: string;
 }
 
@@ -21,44 +21,45 @@ interface IHistory {
   lastChat?: Date;
 }
 
-export async function GET(req: Request) {
+export async function GET(req: Request): Promise<Response> {
   try {
     await connectDB();
     const user = await protectRoute(req);
 
-    const [documents, chatStats, chatCounts, documentCounts]=
-    await Promise.all([
-      Document.find({ user: user._id }).select("_id title"),
-  
-      Chat.aggregate<IchatStats>([
-        { $match: { user: user._id } },
-        {
-          $group: {
-            _id: "$document",
-            chatCount: { $sum: 1 },
-            lastChat: { $max: "$createdAt" },
+    const [documents, chatStats, chatCounts] =
+      await Promise.all([
+        Document.find({ user: user._id }).select("_id title"),
+
+        Chat.aggregate<IchatStats>([
+          { $match: { user: user._id } },
+          {
+            $group: {
+              _id: "$document",
+              chatCount: { $sum: 1 },
+              lastChat: { $max: "$createdAt" },
+            },
           },
-        },
-      ]),
-  
-      Chat.countDocuments({ user: user._id }),
-  
-      Document.countDocuments({ user: user._id }),
-    ]);
-  
-  const statsByDocument = new Map<string, IchatStats>(
-    chatStats.map((stat) => [String(stat._id), stat]),
-  );
-  
-  const history: IHistory[] = documents.map((document) => {
-    const stats = statsByDocument.get(String(document._id));
-  
-    return {
-      _id: document,
-      chatCount: stats?.chatCount ?? 0,
-      lastChat: stats?.lastChat,
-    };
-  });
+        ]),
+
+        Chat.countDocuments({ user: user._id }),
+      ]);
+
+    const documentCounts = documents.length;
+
+
+    const statsByDocument = new Map<string, IchatStats>(
+      chatStats.map((stat) => [String(stat._id), stat]),
+    );
+
+    const history: IHistory[] = documents.map((document) => {
+      const stats = statsByDocument.get(String(document._id));
+
+      return {
+        _id: document,
+        chatCount: stats?.chatCount ?? 0,
+        lastChat: stats?.lastChat,
+      };
+    });
 
     return Response.json(
       { history, chatCounts, documentCounts },

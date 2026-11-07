@@ -2,6 +2,7 @@
 import AdminSkeleton from "@/components/skeltones/AdminSkeleton";
 import api from "@/lib/axios";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 interface IAdminUserData {
   _id: string;
@@ -20,22 +21,37 @@ interface IAdminResponse {
 }
 
 export default function Admin() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState<IAdminUserData[]>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [totalDocuments, setTotalDocuments] = useState(0);
   const [totalIndexedPages, setTotalIndexedPages] = useState(0);
+  const [hasFetched, setHasFetched] = useState(false)
 
   useEffect(() => {
     const fetchAdminData = async () => {
-      setLoading(true);
-      const res = await api.get<IAdminResponse>("/api/admin");
-      setLoading(false);
-      setUserData(res.data.usersData);
-      setTotalUsers(res.data.totalUsers);
-      setTotalDocuments(res.data.totalDocuments);
-      setTotalIndexedPages(res.data.totalIndexedPages);
+      try {
+        setLoading(true);
+        if (hasFetched) {
+          setLoading(false)
+          return
+        }
+        const res = await api.get<IAdminResponse>("/api/admin");
+
+        setUserData(res.data.usersData);
+        setTotalUsers(res.data.totalUsers);
+        setTotalDocuments(res.data.totalDocuments);
+        setTotalIndexedPages(res.data.totalIndexedPages);
+        setHasFetched(true)
+      } catch (error) {
+        console.error("Failed to fetch admin data:", error);
+        toast.error("Failed to load admin dashboard");
+      } finally {
+        setLoading(false)
+        setHasFetched(true)
+      }
     };
+
     fetchAdminData();
   }, []);
 
@@ -74,7 +90,17 @@ export default function Admin() {
 
       {/* Users */}
       <div className="grid md:grid-cols-2 gap-6">
-        {userData?.map((user) =>
+        {userData.length === 0 ||
+          userData.every((user) => user.role !== "user") ? (
+          <div className="col-span-full rounded-2xl border border-zinc-800 bg-zinc-900 p-10 text-center">
+            <h3 className="text-lg font-semibold text-zinc-200">
+              No users found
+            </h3>
+            <p className="mt-2 text-sm text-zinc-500">
+              Registered users will appear here.
+            </p>
+          </div>
+        ) : (userData?.map((user) =>
           user?.role === "user" ? (
             <div
               key={user._id}
@@ -324,6 +350,7 @@ export default function Admin() {
               />
             </div>
           ) : null,
+        )
         )}
       </div>
     </main>

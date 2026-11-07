@@ -9,10 +9,11 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 export default function ChatPage() {
-  const { askAi, sending, getChats, messages } = chatStore();
+  const { askAi, sending, getChats, messages, currentPage, hasMore, loadingOlder, } = chatStore();
   const { fetchDocuments, documents, loading } = documentStore();
   const [text, setText] = useState("");
   const [switchingDocument, setSwitchingDocument] = useState(false);
+  const [chatHistoryLoading, setChatHistoryLoading] = useState(true);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -21,10 +22,7 @@ export default function ChatPage() {
   );
 
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const handleSendChat = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -32,16 +30,32 @@ export default function ChatPage() {
   };
 
   const SendChat = async (question: string = text) => {
-    if (!question) {
+    if (!question.trim()) {
       return toast.error("Please enter the text");
     }
-    await askAi(question, selectDoc);
+
+    if (sending) return;
     setText("");
+    await askAi(question.trim(), selectDoc || null);
   };
 
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments]);
+
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      setChatHistoryLoading(true);
+
+      try {
+        await getChats(selectDoc || null);
+      } finally {
+        setChatHistoryLoading(false);
+      }
+    };
+
+    fetchChatHistory();
+  }, [selectDoc, getChats]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
@@ -50,16 +64,57 @@ export default function ChatPage() {
     }
   };
 
-  const handleDefaultQuestion = async ({
-    question,
-    e,
-  }: {
-    question: string;
-    e: React.MouseEvent<HTMLButtonElement>;
-  }) => {
+  const handleDefaultQuestion = async ({question,e,}: { question: string; e: React.MouseEvent<HTMLButtonElement>}) => {
     e.preventDefault();
     await SendChat(question);
   };
+
+  const handleScroll = async () => {
+    const container = chatContainerRef.current;
+
+    if (!container || loadingOlder || !hasMore || chatHistoryLoading) {
+      return;
+    }
+
+    // Check whether the user has reached the top.
+    if (container.scrollTop <= 50) {
+      const previousScrollHeight = container.scrollHeight;
+      const previousScrollTop = container.scrollTop;
+
+      await getChats(selectDoc || null, currentPage + 1, true);
+
+      // Restore the user's previous scroll position.
+      requestAnimationFrame(() => {
+        const updatedContainer = chatContainerRef.current;
+
+        if (updatedContainer) {
+          const newScrollHeight = updatedContainer.scrollHeight;
+
+          updatedContainer.scrollTop =
+            newScrollHeight - previousScrollHeight + previousScrollTop;
+        }
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!chatHistoryLoading && messages.length > 0) {
+      bottomRef.current?.scrollIntoView({
+        behavior: "instant",
+      });
+    }
+  }, [chatHistoryLoading]);
+
+
+  useEffect(() => {
+    const lastMessage = messages[messages.length - 1];
+
+    if (lastMessage?.isPending) {
+      bottomRef.current?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }
+  }, [messages]);
 
   if (loading) return <ChatSkeleton />;
   return (
@@ -74,8 +129,13 @@ export default function ChatPage() {
       </div>
 
       {/* Chat */}
-      <div className="flex-1 overflow-y-auto px-5">
-        {documents.length === 0 && !loading ? (
+      <div
+        ref={chatContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto px-5">
+        {chatHistoryLoading ? (
+          <ChatSkeleton />
+        ) : documents.length === 0 && !loading ? (
           <div className="flex h-full items-center justify-center">
             <div className="max-w-md text-center">
               <div className="mb-5 text-7xl">📄</div>
@@ -96,9 +156,17 @@ export default function ChatPage() {
           </div>
         ) : messages?.length > 0 ? (
           <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-            {messages?.map((message) => (
+
+            {loadingOlder && (
+              <p className="py-3 text-center text-xs text-zinc-400">
+                Loading older messages...
+              </p>
+            )}
+
+            {messages.map((message) => (
               <ChatMessage key={message._id} message={message} />
             ))}
+
           </div>
         ) : (
           <div className="flex h-full items-center justify-center">
@@ -145,20 +213,16 @@ export default function ChatPage() {
 
       {/* Input */}
       {documents.length !== 0 && (
-        <div className="p-5 bg-transparent border-none">
+        <div className="p-5 sticky bottom-0 border-none bg-transparent"> 
           <div className="max-w-4xl mx-auto p-4 bg-zinc-900 border border-zinc-800 rounded-2xl">
             <form onSubmit={handleSendChat}>
               {/* Document Select */}
               <select
                 value={selectDoc}
-                onChange={async (e) => {
-                  const value = e.target.value;
-                  setSelectDoc(value);
-                  setSwitchingDocument(true);
-                  await getChats(value);
-                  setSwitchingDocument(false);
+                onChange={(e) => {
+                  setSelectDoc(e.target.value);
                 }}
-                className="w-full px-3 py-2.5 text-sm bg-zinc-800 border border-zinc-700 rounded-lg outline-none focus:border-blue-500 sm:px-4 sm:py-3 sm:text-base"
+                className="w-full px-3 py-1.5 text-sm bg-zinc-800 border border-zinc-700 rounded-lg outline-none focus:border-blue-500 sm:px-4 sm:py-3 sm:text-base"
               >
                 <option value="">
                   {switchingDocument
@@ -167,7 +231,7 @@ export default function ChatPage() {
                 </option>
                 {documents?.map((doc) => (
                   <option key={doc._id} value={doc._id}>
-                    {doc.title}
+                    📄: {doc.title}
                   </option>
                 ))}
               </select>
@@ -187,10 +251,10 @@ export default function ChatPage() {
                   type="submit"
                   disabled={sending}
                   className={
-                    "px-6 py-3 bg-blue-600 rounded-xl hover:bg-blue-700 transition"
+                    `px-6 py-1 ${sending ? "bg-gray-500" : "bg-blue-600"} rounded-xl hover:bg-blue-700 transition`
                   }
                 >
-                  {sending ? " Sending..." : "Send"}
+                  Ask
                 </button>
               </div>
             </form>

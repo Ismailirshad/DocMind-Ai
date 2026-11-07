@@ -8,8 +8,11 @@ interface ChatMessageProps {
     document: {
       title: string;
     };
+    isPending?: boolean;
+    error?: string;
   };
 }
+
 const ChatMessage = memo(function ChatMessage({ message }: ChatMessageProps) {
   return (
     <div className="space-y-3">
@@ -31,7 +34,18 @@ const ChatMessage = memo(function ChatMessage({ message }: ChatMessageProps) {
       {/* AI */}
       <div className="flex justify-start">
         <div className="max-w-2xl rounded-2xl border border-zinc-800 bg-zinc-900 px-5 py-4">
-          <AIResponse content={message.answer} />
+          {message.isPending ? (
+            <div className="flex items-center gap-2 text-zinc-400">
+              <span className="animate-pulse">●</span>
+              Thinking...
+            </div>
+          ) : message.error ? (
+            <p className="text-red-500">
+              Failed to generate response: {message.error}
+            </p>
+          ) : (
+            <AIResponse content={message.answer} />
+          )}
         </div>
       </div>
     </div>

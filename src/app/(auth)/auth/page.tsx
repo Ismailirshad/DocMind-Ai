@@ -16,10 +16,11 @@ export default function AuthPage() {
 
   const handleSubmit = async () => {
     if (formType === "login") {
-      if (!formData.email || !formData.password) {
+      if (!formData.email.trim() || !formData.password) {
         toast.error("All fields are required");
         return
       }
+      
       const result = await login({
         email: formData.email,
         password: formData.password,
@@ -62,8 +63,11 @@ export default function AuthPage() {
               </label>
 
               <input
+                id="name"
+                name="name"
                 type="text"
                 placeholder="Enter your username"
+                required
                 value={formData.name}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setFormData({ ...formData, name: e.target.value })
@@ -77,8 +81,12 @@ export default function AuthPage() {
             <label className="block text-sm text-zinc-400 mb-2">Email</label>
 
             <input
+              id="email"
               type="email"
+              name="email"
               placeholder="Enter your email"
+              required
+              autoComplete="email"
               value={formData.email}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, email: e.target.value })
@@ -91,8 +99,11 @@ export default function AuthPage() {
             <label className="block text-sm text-zinc-400 mb-2">Password</label>
 
             <input
+              id="password"
+              name="password"
               type="password"
               placeholder="Enter your password"
+              required
               value={formData.password}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setFormData({ ...formData, password: e.target.value })
@@ -109,6 +120,7 @@ export default function AuthPage() {
 
           <button
             type="submit"
+            disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 transition rounded-lg py-3 font-medium text-white"
           >
             {loading ? (

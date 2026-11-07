@@ -1,30 +1,55 @@
 import { protectRoute } from "@/lib/auth";
 import connectDB from "@/lib/db";
-import Chat, { IChat } from "@/models/chat";
-import { HydratedDocument } from "mongoose";
+import Chat from "@/models/chat";
+import mongoose from "mongoose";
 
-export async function GET(req: Request) {
+interface GetChatsResponse {
+  messages: ChatMessage[];
+  messageCount: number;
+  hasMore: boolean;
+  currentPage: number;
+}
+
+interface PopulatedDocument {
+  _id: mongoose.Types.ObjectId;
+  title: string;
+}
+interface ChatMessage {
+  _id: mongoose.Types.ObjectId;
+  user: mongoose.Types.ObjectId;
+  document?: PopulatedDocument | null
+  question: string;
+  answer: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+export async function GET(req: Request): Promise<Response> {
   try {
     await connectDB();
     const user = await protectRoute(req);
+
     const { searchParams } = new URL(req.url);
     const documentId = searchParams.get("documentId");
+    const page = parseInt(searchParams.get("page") || "1")
+    const limit = 5;
+    const skip = (page - 1) * limit
+    const filter = documentId
+      ? { user: user._id, document: documentId }
+      : { user: user._id };
 
-    let messages: HydratedDocument<IChat>[] = [];
+    const [messages, messageCount] = await Promise.all([
+      Chat.find(filter).populate<{ document: PopulatedDocument | null }>("document", "_id title").sort({ createdAt: -1, _id: -1 }).skip(skip).limit(limit),
 
-    if (documentId) {
-      messages = await Chat.find({ user: user._id, document: documentId })
-        .populate("document")
-        .sort({ createdAt: 1 });
-    } else {
-      messages = await Chat.find({ user: user._id })
-        .populate("document")
-        .sort({ createdAt: 1 })
-        .limit(20);
+      Chat.countDocuments(filter)
+    ])
+
+    const response: GetChatsResponse = {
+      messages: messages.reverse(),
+      messageCount,
+      hasMore: skip + messages.length < messageCount,
+      currentPage: page,
     }
-    const messageCount = await Chat.countDocuments({ user: user._id });
-
-    return Response.json({ messages, messageCount }, { status: 200 });
+    return Response.json(response, { status: 200 });
   } catch (error) {
     console.error("Error in fetching chats route:", error);
     if (error instanceof Error && error.message === "Access token expired") {

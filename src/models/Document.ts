@@ -48,6 +48,8 @@ const documentSchema = new mongoose.Schema<IDocument>(
     timestamps: true,
   },
 );
+
+documentSchema.index({ user: 1,  createdAt: -1 });
 const Document =
   (mongoose.models.Document as Model<IDocument>) || mongoose.model<IDocument>("Document", documentSchema);
 export default Document;

@@ -34,7 +34,6 @@ export default function DocumentsPage() {
     indexedPages,
     categories,
   } = documentStore();
-
   const { chatCount } = chatStore();
   const { user, loading: userLoading } = userStore();
 
@@ -47,11 +46,14 @@ export default function DocumentsPage() {
   }, [userLoading, user, fetchDocuments]);
 
   const handleUpload = async () => {
-    if (!documentData.title || !documentData.category || !documentData.file) {
+    if (!documentData.title.trim() || !documentData.category.trim() || !documentData.file) {
       toast.error("Please fill all the fileds");
       return;
     }
-
+    if (documentData.file.type !== "application/pdf") {
+      toast.error("Only PDF files are allowed");
+      return;
+    }
     const formData = new FormData();
     formData.append("title", documentData.title);
     formData.append("category", documentData.category);
@@ -69,14 +71,13 @@ export default function DocumentsPage() {
       file: null,
     });
 
+    setShowNewCategory(false);
     router.push(`/?documentId=${document._id}`);
   };
 
-  const searchDocument = documents.filter((doc) => {
-    return doc.title.toLowerCase().includes(searchDoc.toLowerCase());
-  });
-
-  const displayDocuments = searchDoc ? searchDocument : documents;
+  const displayDocuments = documents.filter((doc) =>
+    doc.title.toLowerCase().includes(searchDoc.trim().toLowerCase()),
+  );
 
   if (loading) return <DocumentsSkeleton />;
   return (
@@ -227,41 +228,6 @@ export default function DocumentsPage() {
             </div>
           </div>
 
-          {/* Stats */}
-          {/* <div className="grid grid-cols-2 mx-auto mb-10 gap-4 sm:grid-cols-3 lg:grid-cols-3">
-            <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-zinc-400">Documents</p>
-                  <h2 className="text-3xl font-bold">{documentCount}</h2>
-                </div>
-
-                <div className="text-3xl">📄</div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-zinc-400">Pages Indexed</p>
-                  <h2 className="text-3xl font-bold">{indexedPages}</h2>
-                </div>
-
-                <div className="text-3xl">📚</div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-zinc-400">AI Chats</p>
-                  <h2 className="text-3xl font-bold">{chatCount}</h2>
-                </div>
-
-                <div className="text-3xl">💬</div>
-              </div>
-            </div>
-          </div> */}
           <div
             className="
     grid

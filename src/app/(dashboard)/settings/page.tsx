@@ -20,8 +20,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!UserLoading && user) {
-      fetchDocuments();
-      getChats();
+      Promise.all([fetchDocuments(), getChats()]);
     }
   }, [UserLoading, user, fetchDocuments, getChats]);
 

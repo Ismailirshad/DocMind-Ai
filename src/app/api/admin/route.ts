@@ -7,12 +7,27 @@ import mongoose from "mongoose";
 
 interface IUsersData {
   _id: mongoose.Types.ObjectId;
-  role: "user" | "admin";
   name: string;
   email: string;
+  role: "user" | "admin";
   documentsCount: number;
   indexedPages: number;
   chatCount: number;
+}
+interface IDocumentStats {
+  _id: mongoose.Types.ObjectId;
+  documentCounts: number;
+  indexedPages: number;
+}
+interface IChatStats {
+  _id: mongoose.Types.ObjectId;
+  chatCount: number;
+}
+interface IUser {
+  _id: mongoose.Types.ObjectId;
+  name: string;
+  email: string;
+  role: "user" | "admin";
 }
 export async function GET(req: Request) {
   try {
@@ -27,43 +42,70 @@ export async function GET(req: Request) {
         { status: 500 },
       );
 
-    const users = await User.find()
-      .select("name email _id role")
-      .sort({ createdAt: -1 });
+    const [users, documentStats, chatStats]: [IUser[], IDocumentStats[], IChatStats[]] = await Promise.all([
+      User.find()
+        .select("name email role")
+        .sort({ createdAt: -1 })
+        .lean(),
 
-    const documents = await Document.find().select("user pageCount");
-    const chats = await Chat.find().select("user");
+      Document.aggregate([
+        {
+          $group: {
+            _id: "$user",
+            documentCounts: { $sum: 1 },
+            indexedPages: {
+              $sum: { $ifNull: ["$pageCount", 0] },
+            },
+          }
+        }
+      ]),
 
+      Chat.aggregate([
+        {
+          $group: {
+            _id: "$user",
+            chatCount: { $sum: 1 },
+          },
+        },
+      ])
+    ])
+
+    // Convert aggregation results into Maps for fast lookup.
+    const documentMap = new Map(
+      documentStats.map((item) => [item._id.toString(), item]),
+    );
+
+    const chatMap = new Map(
+      chatStats.map((item) => [item._id.toString(), item]),
+    );
+
+
+    // Combine user data with their statistics.
     const usersData: IUsersData[] = users.map((user) => {
-      const userDocuments = documents.filter(
-        (doc) => doc.user.toString() === user._id.toString(),
-      );
+      const userId = user._id.toString();
 
-      const userChats = chats.filter(
-        (chat) => chat.user.toString() === user._id.toString(),
-      );
-
-      const indexedPages = userDocuments.reduce(
-        (acc, doc) => acc + doc.pageCount,
-        0,
-      );
+      const documentData = documentMap.get(userId);
+      const chatData = chatMap.get(userId);
 
       return {
         _id: user._id,
-        role: user.role,
         name: user.name,
         email: user.email,
-        documentsCount: userDocuments.length,
-        indexedPages,
-        chatCount: userChats.length * 2,
+        role: user.role,
+        documentsCount: documentData?.documentCounts || 0,
+        indexedPages: documentData?.indexedPages || 0,
+        chatCount: chatData?.chatCount || 0,
       };
     });
 
     const totalUsers = users.length;
-    const totalDocuments = documents.length;
+    const totalDocuments = documentStats.reduce(
+      (total, item) => total + item.documentCounts,
+      0,
+    );
 
-    const totalIndexedPages = documents.reduce(
-      (acc, doc) => acc + doc.pageCount,
+    const totalIndexedPages = documentStats.reduce(
+      (total, item) => total + item.indexedPages,
       0,
     );
 

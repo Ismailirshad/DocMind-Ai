@@ -10,8 +10,12 @@ interface ChatStore {
   chatCount: number;
   history: History[];
   documentsCount: number;
+  loadingOlder: boolean;
+  hasMore: boolean;
+  currentPage: number;
   askAi: (question: string, documentId: string | null) => Promise<void>;
-  getChats: (documentId?: string | null) => Promise<void>;
+  getChats: (documentId?: string | null, page?: number,
+    loadMore?: boolean,) => Promise<void>;
   getHistory: () => Promise<void>;
 }
 export interface Message {
@@ -22,6 +26,8 @@ export interface Message {
   document: DocumentInfo;
   createdAt: string;
   updatedAt: string;
+  isPending?: boolean;
+  error?: string;
 }
 interface DocumentInfo {
   _id: string;
@@ -33,6 +39,8 @@ interface IAskAiResponse {
 interface IGetChatsResponse {
   messages: Message[];
   messageCount: number;
+  hasMore: boolean;
+  currentPage: number;
 }
 export interface HistoryDocument {
   _id: string;
@@ -58,42 +66,92 @@ export const chatStore = create<ChatStore>((set) => ({
   chatCount: 0,
   history: [],
   documentsCount: 0,
+  loadingOlder: false,
+  hasMore: true,
+  currentPage: 1,
+
   askAi: async (question, documentId) => {
-    set({ sending: true });
+    const tempId = crypto.randomUUID();
+
+    // 1. Immediately display the user's question.
+    const tempMessage: Message = {
+      _id: tempId,
+      user: "",
+      question,
+      answer: "",
+      document: {
+        _id: documentId || "",
+        title: "",
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      isPending: true,
+    };
+
+    set((state) => ({
+      sending: true,
+      messages: [...state.messages, tempMessage],
+    }));
+
     try {
+      // 2. Send the question to the backend.
       const res = await api.post<IAskAiResponse>(
         "/api/chat/chat",
         { question, documentId },
         { withCredentials: true },
       );
+
+      // 3. Replace temporary message with the actual saved message.
       set((state) => ({
         sending: false,
-        messages: [...state.messages, res.data.chat],
+        messages: state.messages.map((message) =>
+          message._id === tempId ? res.data.chat : message,
+        ),
       }));
     } catch (error) {
-      set({ sending: false });
+      // 4. Keep the question and display an error.
+      const errorMessage = axios.isAxiosError(error)
+        ? error.response?.data?.message || "Failed to generate response."
+        : "Something went wrong. Please try again.";
 
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message);
-      } else {
-        console.log("Error in askAi:", error);
-      }
+      set((state) => ({
+        sending: false,
+        messages: state.messages.map((message) =>
+          message._id === tempId
+            ? {
+              ...message,
+              isPending: false,
+              error: errorMessage,
+            }
+            : message,
+        ),
+      }));
     }
   },
-  getChats: async (documentId) => {
-    set({ loading: true });
+  getChats: async (documentId, page = 1, loadMore = false) => {
+    set({ loading: !loadMore, loadingOlder: loadMore });
     try {
       const res = await api.get<IGetChatsResponse>("/api/chat/getchat", {
-        params: documentId ? { documentId } : {},
+        params: documentId ? { documentId, page } : { page },
         withCredentials: true,
       });
+      set((state) => ({
+        loading: false,
+        loadingOlder: false,
+
+        messages: loadMore
+          ? [...res.data.messages, ...state.messages]
+          : res.data.messages,
+
+        chatCount: res.data.messageCount,
+        hasMore: res.data.hasMore,
+        currentPage: res.data.currentPage,
+      }));
+    } catch (error) {
       set({
         loading: false,
-        messages: res.data.messages,
-        chatCount: res.data.messageCount,
+        loadingOlder: false,
       });
-    } catch (error) {
-      set({ loading: false });
       if (axios.isAxiosError(error)) {
         console.log(error.response?.data?.message, "error in fetching chats");
       } else {
