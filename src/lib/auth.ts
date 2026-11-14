@@ -15,7 +15,9 @@ export async function protectRoute(req: Request) {
   try {
     const decoded = jwt.verify(token, process.env.ACCESS_SECRET!) as JwtPayload;
 
-    const user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id)
+    .select("_id role name email")
+    .lean();
 
     if (!user) {
       throw new Error("User not found");

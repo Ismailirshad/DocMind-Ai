@@ -1,290 +1,202 @@
-# DocMind AI – AI-Powered Document Chat
+# DocMind AI – RAG-Powered Document Assistant
 
-DocMind AI is an AI-powered document assistant that allows users to upload PDF documents, process their content, and interact with them through an intelligent chat interface.
+DocMind AI is an AI-powered document assistant that allows users to upload PDF documents and ask questions using **Retrieval-Augmented Generation (RAG)**.
 
-Users can ask questions about a selected document, query multiple documents, or ask general questions. The application uses document-aware AI responses to provide relevant answers based on the uploaded content and clearly indicates when information is not available in the selected document.
+It processes documents into smaller text chunks, generates vector embeddings, and stores them in MongoDB Atlas for semantic search. When a user asks a question, the system retrieves relevant content and uses Google Gemini to generate accurate, context-aware responses.
 
-## 🚀 Live Demo
+**Live Demo:** https://docmind-ai.ismailirshad.in/
 
-🔗 Live: https://docmind-ai.ismailirshad.in/
+**GitHub:** https://github.com/Ismailirshad/DocMind-Ai
 
-🔗 GitHub: https://github.com/Ismailirshad/DocMind-Ai.git
-
----
-
-## ✨ Features
-
-### 🔐 Authentication
-
-- User registration and login
-- Google OAuth authentication
-- JWT-based authentication
-- Access token and refresh token based session management
-- Automatic access-token refresh when the access token expires
-- Protected API routes
-- Persistent authentication using refresh tokens
-- Logout functionality
-
-### 📄 Document Management
-
-- Upload PDF documents
-- Store uploaded files using Cloudinary
-- Extract text from PDFs using `pdf-parse`
-- Automatically calculate PDF page count
-- Store document metadata and extracted text in MongoDB
-- Organize documents using categories
-- Search documents by title
-- View uploaded documents
-- Delete/manage documents
-
-### 🤖 AI Document Chat
-
-- Ask questions about a selected document
-- Ask questions across multiple documents
-- Ask general AI questions without selecting a document
-- Gemini-powered AI responses
-- Document-aware question answering
-- Context-based responses using extracted document content
-- Clear response when requested information is not available in the document
-- Separation between document-based answers and general AI answers
-- Chat history for each document
-
-### 💬 Chat History
-
-- Store user questions and AI responses
-- Associate conversations with documents
-- View previous conversations
-- Display chat counts
-- Search document conversation history
-
-### 📊 Dashboard
-
-- Total document count
-- Total indexed pages
-- Total AI chat count
-- Recent documents
-- Document search
-- Category-based organization
-
-### 🎨 User Interface
-
-- Responsive UI
-- Dark-themed interface
-- Loading skeletons
-- Toast notifications
-- Document selection interface
-- Chat interface with user and AI messages
-- Responsive document management interface
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-
-- Next.js
-- React
-- JavaScript
-- Tailwind CSS
-- Zustand
-- Axios
-
-### Backend
-
-- Next.js API Routes
-- Node.js
-- JWT
-- MongoDB
-- Mongoose
-
-### AI
-
-- Google Gemini API
+## Features
 
 ### Authentication
+- User registration and login
+- Google OAuth authentication
+- JWT access and refresh token authentication
+- Automatic access-token refresh
+- Protected API routes
 
-- JWT Access Tokens
-- JWT Refresh Tokens
-- Google OAuth
+### Document Management
+- PDF upload and processing
+- Cloudinary file storage
+- Text extraction using `pdf-parse`
+- Automatic page count calculation
+- Document categorization and search
+- Document management and deletion
 
-### Document Processing
+### RAG-Based AI Chat
+- Text chunking with overlapping sections
+- Vector embedding generation using Gemini Embedding API
+- Embedding storage in MongoDB Atlas
+- Semantic retrieval using MongoDB Atlas Vector Search
+- Single-document and multi-document querying
+- Context-aware answer generation using Gemini 2.5 Flash
+- User-specific document retrieval
+- Responses grounded in retrieved document content
 
-- `pdf-parse`
-- Cloudinary
+### Chat & Dashboard
+- Persistent chat history
+- Document-based conversations
+- Document and indexed-page statistics
+- User-specific usage tracking
+- Admin dashboard for user and document monitoring
 
-### Storage
+### User Interface
+- Responsive dark-themed interface
+- Document selection and chat interface
+- Loading skeletons and toast notifications
+- Zustand state management
 
-- MongoDB Atlas
-- Cloudinary
+## Tech Stack
 
----
+| Category | Technologies |
+|---|---|
+| Frontend | Next.js, React, JavaScript, Tailwind CSS |
+| State Management | Zustand |
+| Backend | Next.js API Routes, Node.js |
+| Database | MongoDB Atlas, Mongoose |
+| AI Model | Google Gemini 2.5 Flash |
+| Embeddings | Gemini Embedding API |
+| Vector Search | MongoDB Atlas Vector Search |
+| Authentication | JWT, Google OAuth |
+| HTTP Client | Axios |
+| PDF Processing | pdf-parse |
+| File Storage | Cloudinary |
 
-## 🏗️ Application Architecture
+## RAG Architecture
+
+DocMind AI uses Retrieval-Augmented Generation to provide document-aware answers.
 
 ```text
-                         ┌─────────────────────┐
-                         │       User          │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │    Next.js / React  │
-                         │      Frontend       │
-                         └──────────┬──────────┘
-                                    │
-                              Axios API
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │    Next.js API       │
-                         │      Routes          │
-                         └──────────┬──────────┘
-                                    │
-                ┌───────────────────┼───────────────────┐
-                │                   │                   │
-                ▼                   ▼                   ▼
-        ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-        │   MongoDB    │    │  Cloudinary  │    │ Gemini API   │
-        │              │    │              │    │              │
-        │ Users        │    │ PDF Files    │    │ AI Answers   │
-        │ Documents    │    │              │    │              │
-        │ Chats        │    │              │    │              │
-        └──────────────┘    └──────────────┘    └──────────────┘
-                                    │
-                                    ▼
-                            ┌──────────────┐
-                            │   pdf-parse  │
-                            │              │
-                            │ Text Extract │
-                            └──────────────┘
-
-
-
-📁 Project Structure
-
-The project follows a Next.js application structure with separate components, API routes, models, stores, and utility functions.
-
-docmind-ai/
-│
-├── src/
-│   │
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── auth/
-│   │   │   │   ├── login/
-│   │   │   │   ├── register/
-│   │   │   │   ├── refresh/
-│   │   │   │   ├── logout/
-│   │   │   │   └── profile/
-│   │   │   │
-│   │   │   ├── chat/
-│   │   │   │   ├── chat/
-│   │   │   │   └── getchat/
-│   │   │   │
-│   │   │   └── document/
-│   │   │       ├── upload/
-│   │   │       ├── fetchdocuments/
-│   │   │       └── ...
-│   │   │
-│   │   ├── history/
-│   │   ├── documents/
-│   │   ├── login/
-│   │   └── ...
-│   │
-│   ├── components/
-│   │   ├── Documents.tsx
-│   │   ├── ChatMessage.tsx
-│   │   ├── PdfViewerModal.tsx
-│   │   ├── Sidebar.tsx
-│   │   └── ...
-│   │
-│   ├── lib/
-│   │   ├── axios.ts
-│   │   ├── auth/
-│   │   ├── db.ts
-│   │   └── ...
-│   │
-│   ├── models/
-│   │   ├── User.ts
-│   │   ├── Document.ts
-│   │   └── Chat.ts
-│   │
-│   └── store/
-│       ├── userStore.ts
-│       ├── documentStore.ts
-│       └── chatStore.ts
-│
-├── public/
-│
-├── .env
-├── package.json
-└── README.md
-
-🤖 AI Chat Flow
-
-DocMind AI supports three types of questions.
-
-## Selected Document Questions
-
-The user selects a document and asks a question.
-
-User Question
-      │
-      ▼
-Selected Document
-      │
-      ▼
-Extracted Document Text
-      │
-      ▼
-Gemini API
-      │
-      ▼
-Document-aware Answer
-
-The AI is instructed to use the selected document as the primary source of information.
-
-If the requested information cannot be found in the document, the application provides a clear response instead of presenting unrelated information as if it came from the document.
-
-## Multi-Document Questions
-
-Users can query information across multiple uploaded documents.
-
-User Question
-      │
-      ▼
-Multiple Documents
-      │
-      ▼
-Relevant Document Content
-      │
-      ▼
-Gemini API
-      │
-      ▼
-Combined Answer
-
-## General Questions
-
-Users can also ask general questions without selecting a document.
-
-User Question
-      │
-      ▼
-No Document Selected
-      │
-      ▼
-Gemini API
-      │
-      ▼
-General AI Response
-
-This keeps general AI conversations separate from document-based answers.
-
-
-Conclusion
-
-DocMind AI is a full-stack AI-powered document assistant that combines Next.js, MongoDB, Zustand, JWT authentication, Google OAuth, Cloudinary, PDF processing, and Gemini AI to provide an interactive document-based question-answering experience.
-
-The project demonstrates the implementation of secure authentication, PDF processing, cloud file storage, document-aware AI conversations, multi-document querying, chat history, and automatic access-token refresh, providing a practical end-to-end example of building an AI-powered SaaS application.
+          PDF Upload
+              |
+              v
+       Cloudinary Storage
+              |
+              v
+        PDF Text Extraction
+              |
+              v
+         Text Chunking
+       (Overlapping Chunks)
+              |
+              v
+       Gemini Embeddings
+              |
+              v
+      MongoDB Atlas Storage
+       (Document Vectors)
+              |
+              v
+        User Question
+              |
+              v
+     Generate Query Embedding
+              |
+              v
+    MongoDB Atlas Vector Search
+              |
+              v
+      Retrieve Top 5 Chunks
+              |
+              v
+     Retrieved Context + Question
+              |
+              v
+       Gemini 2.5 Flash
+              |
+              v
+        AI-Generated Answer
 ```
+
+## How It Works
+
+1. Users upload PDF documents.
+2. The application extracts text and splits it into overlapping chunks.
+3. Each chunk is converted into a vector embedding using Gemini Embedding API.
+4. Embeddings and associated metadata are stored in MongoDB Atlas.
+5. When a user asks a question, the question is converted into an embedding.
+6. MongoDB Atlas Vector Search retrieves the five most relevant chunks.
+7. Retrieved content is provided to Gemini 2.5 Flash as context.
+8. Gemini generates a response based on the retrieved information.
+
+**Retrieval modes:**
+- **Single-document:** Searches within the selected document.
+- **Multi-document:** Searches across all documents belonging to the authenticated user.
+
+## Project Structure
+
+```text
+src/
+├── app/
+│   ├── api/
+│   │   ├── auth/
+│   │   ├── chat/
+│   │   ├── document/
+│   │   └── admin/
+│   └── (dashboard)/
+│       ├── documents/
+│       ├── history/
+│       ├── settings/
+│       └── admin/
+├── components/
+├── lib/
+│   ├── axios.ts
+│   ├── embedding.ts
+│   ├── gemini.ts
+│   ├── db.ts
+│   └── auth/
+├── models/
+│   ├── User.ts
+│   ├── Document.ts
+│   ├── DocumentChunk.ts
+│   └── Chat.ts
+└── store/
+    ├── userStore.ts
+    ├── documentStore.ts
+    └── chatStore.ts
+```
+
+## Getting Started
+
+### Prerequisites
+- Node.js
+- MongoDB Atlas account with Vector Search support
+- Google Gemini API key
+- Cloudinary account
+- Google OAuth credentials (if using Google login)
+
+### Installation
+
+```bash
+git clone https://github.com/Ismailirshad/DocMind-Ai.git
+
+cd DocMind-Ai
+
+npm install
+```
+
+Configure your environment variables in a `.env` file using the variable names expected by the application.
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open http://localhost:3000.
+
+## Future Improvements
+- Document source citations with page references
+- Streaming AI responses
+- Advanced document filtering and retrieval
+- Improved conversational context management
+
+## Author
+
+**Ismail Irshad**
+
+- Portfolio: https://www.ismailirshad.in
+- GitHub: https://github.com/Ismailirshad
+- LinkedIn: https://www.linkedin.com/in/ismail-irshad

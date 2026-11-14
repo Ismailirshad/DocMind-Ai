@@ -25,6 +25,7 @@ export async function GET(req: Request): Promise<Response> {
   try {
     await connectDB();
     const user = await protectRoute(req);
+    console.log("History user ID:", String(user._id));
 
     const [documents, chatStats, chatCounts] =
       await Promise.all([
@@ -43,7 +44,11 @@ export async function GET(req: Request): Promise<Response> {
 
         Chat.countDocuments({ user: user._id }),
       ]);
-
+      console.log({
+        documents: documents.length,
+        chatStats: chatStats.length,
+        chatCounts,
+      });
     const documentCounts = documents.length;
 
 

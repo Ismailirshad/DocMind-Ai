@@ -32,7 +32,7 @@ export async function GET() {
       { id: existUser._id },
       process.env.ACCESS_SECRET!,
       {
-        expiresIn: "1m",
+        expiresIn: "15m",
       },
     );
 

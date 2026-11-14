@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from "react";
@@ -10,24 +11,37 @@ interface FetchProfileProps {
 }
 
 export default function FetchProfile({ children }: FetchProfileProps) {
-  const { profile, user, checkingAuth, refresh } = userStore();
+  const { profile, refresh, user, checkingAuth } = userStore();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname === "/auth") return;
+    // if (pathname === "/auth") return;
 
     const checkUser = async () => {
       try {
-        await refresh();
+        // Check whether an access token already exists.
+        const { accessToken } = userStore.getState();
+
+        // Only refresh when there is no access token.
+        if (!accessToken) {
+          const refreshed = await refresh();
+
+          if (!refreshed) {
+            return;
+          }
+        }
+
+        // Verify the user using the access token.
         await profile();
+
       } catch (error) {
         console.error("Please login", error);
       }
     };
 
     checkUser();
-  }, [pathname, refresh, profile]);
+  }, [ refresh, profile]);
 
   useEffect(() => {
     if (pathname === "/auth") return;
@@ -38,21 +52,11 @@ export default function FetchProfile({ children }: FetchProfileProps) {
     }
   }, [user, checkingAuth, pathname, router]);
 
-  // Login page is public.
-  // Do not wait for authentication before showing it.
   if (pathname === "/auth") {
     return children;
   }
 
-  if (checkingAuth) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <MainLayoutSkeleton />
-      </div>
-    );
-  }
-
-  if (!user) {
+  if (checkingAuth || !user) {
     return (
       <div className="flex items-center justify-center h-screen">
         <MainLayoutSkeleton />

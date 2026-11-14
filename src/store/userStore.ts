@@ -12,7 +12,7 @@ interface userStore {
   signup: (data: SignupData) => Promise<boolean>;
   login: (data: LoginData) => Promise<boolean>;
   logout: () => Promise<void>;
-  refresh: () => Promise<void>;
+  refresh: () => Promise<boolean>;
   profile: () => Promise<void>;
 }
 interface SignupData {
@@ -40,7 +40,7 @@ interface IProfileRes {
 }
 
 interface IRefreshRes {
-  accessToken: string | null;
+  accessToken: string;
 }
 
 export const userStore = create<userStore>((set) => ({
@@ -107,7 +107,11 @@ export const userStore = create<userStore>((set) => ({
   logout: async () => {
     try {
       await axios.post("/api/auth/logout", {}, { withCredentials: true });
-      set({ user: null });
+      set({
+        user: null,
+        accessToken: null,
+        checkingAuth: false,
+      });
       toast.success("logged out successfully");
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -124,7 +128,11 @@ export const userStore = create<userStore>((set) => ({
       const res = await api.get<IProfileRes>("/api/auth/profile");
       set({ user: res.data.user, checkingAuth: false });
     } catch (error) {
-      set({ checkingAuth: false, user: null });
+      set({
+        checkingAuth: false,
+        user: null,
+        accessToken: null,
+      });
       if (axios.isAxiosError(error)) {
         // toast.error(error.response?.data?.message);
         console.log(error.response?.data?.message, "error in checking profile");
@@ -135,15 +143,29 @@ export const userStore = create<userStore>((set) => ({
   },
   refresh: async () => {
     try {
-      const res = await api.get<IRefreshRes>("/api/auth/refresh");
-      set({ accessToken: res.data.accessToken });
+      const res = await axios.get<IRefreshRes>("/api/auth/refresh", {
+        withCredentials: true,
+      });
+
+      set({
+        accessToken: res.data.accessToken,
+      });
+
+      return true;
     } catch (error) {
+      set({
+        accessToken: null,
+        user: null,
+        checkingAuth: false,
+      });
+
       if (axios.isAxiosError(error)) {
-        // toast.error(error.response?.data?.message);
         console.log(error.response?.data?.message, "error in refresh");
       } else {
         console.error("Failed to refresh", error);
       }
+
+      return false;
     }
   },
 }));
